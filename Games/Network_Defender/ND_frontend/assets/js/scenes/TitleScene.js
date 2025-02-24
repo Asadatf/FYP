@@ -17,28 +17,211 @@ class TitleScene extends Phaser.Scene {
     this.titleBackground.setOrigin(0, 0);
     this.titleBackground.displayWidth = this.scale.width;
     this.titleBackground.displayHeight = this.scale.height;
+    
+    // Add cybersecurity grid overlay
+    this.createGridOverlay();
+    
+    // Add network nodes and connections
+    this.createNetworkElements();
 
-    // Title Text
+    // Title Text with enhanced glow effect
     this.titleText = this.add
       .text(this.scale.width / 2, this.scale.height / 2, "Network Defender", {
         fontSize: "64px",
         fill: "#ffffff",
-        stroke: "#000000",
+        stroke: "#00ffff", // Cyan stroke for cybersecurity theme
         strokeThickness: 6,
       })
       .setOrigin(0.5);
 
-    // Title glow animation
+    // Enhanced title glow animation
     this.tweens.add({
       targets: this.titleText,
       alpha: { from: 0.8, to: 1 },
+      strokeThickness: { from: 6, to: 8 },
       duration: 1500,
       yoyo: true,
       repeat: -1,
       ease: "Sine.easeInOut",
     });
+    
+    // Add subtitle
+    this.subtitleText = this.add
+      .text(
+        this.scale.width / 2, 
+        this.scale.height / 2 + 50, 
+        "Secure the Network, Protect the Data", 
+        {
+          fontSize: "24px",
+          fill: "#00ff00",
+          stroke: "#003300",
+          strokeThickness: 2
+        }
+      )
+      .setOrigin(0.5)
+      .setAlpha(0);
+    
+    // Fade in subtitle
+    this.tweens.add({
+      targets: this.subtitleText,
+      alpha: 1,
+      duration: 1000,
+      delay: 500
+    });
 
-    // Buttons
+    // Buttons with enhanced styling
+    this.createButtons();
+  }
+  
+  createGridOverlay() {
+    // Create grid lines
+    const grid = this.add.graphics();
+    grid.lineStyle(1, 0x00ffff, 0.3); // Cyan grid lines
+    
+    // Draw horizontal lines
+    for (let y = 0; y < this.scale.height; y += 30) {
+      grid.moveTo(0, y);
+      grid.lineTo(this.scale.width, y);
+    }
+    
+    // Draw vertical lines
+    for (let x = 0; x < this.scale.width; x += 30) {
+      grid.moveTo(x, 0);
+      grid.lineTo(x, this.scale.height);
+    }
+    
+    // Add subtle pulse animation to grid
+    this.tweens.add({
+      targets: grid,
+      alpha: { from: 0.3, to: 0.1 },
+      duration: 3000,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut"
+    });
+  }
+  
+  createNetworkElements() {
+    // Create network node positions
+    const nodePositions = [
+      { x: this.scale.width * 0.2, y: this.scale.height * 0.2 },
+      { x: this.scale.width * 0.2, y: this.scale.height * 0.8 },
+      { x: this.scale.width * 0.8, y: this.scale.height * 0.2 },
+      { x: this.scale.width * 0.8, y: this.scale.height * 0.8 },
+      { x: this.scale.width * 0.3, y: this.scale.height * 0.5 },
+      { x: this.scale.width * 0.7, y: this.scale.height * 0.5 }
+    ];
+    
+    // Create nodes
+    this.nodes = [];
+    nodePositions.forEach(pos => {
+      // Use the existing 'switch' or 'router' image if available
+      const nodeType = Math.random() > 0.5 ? 'switch' : 'router';
+      try {
+        const node = this.add.image(pos.x, pos.y, nodeType).setScale(0.08);
+        
+        // Add glow effect
+        const glow = this.add.graphics();
+        glow.fillStyle(0x00ffff, 0.3);
+        glow.fillCircle(pos.x, pos.y, 15);
+        
+        this.tweens.add({
+          targets: glow,
+          alpha: { from: 0.3, to: 0.1 },
+          duration: 1500 + Math.random() * 1000,
+          yoyo: true,
+          repeat: -1
+        });
+        
+        this.nodes.push({ node, glow, x: pos.x, y: pos.y });
+      } catch (e) {
+        console.error("Error creating network node:", e);
+      }
+    });
+    
+    // Draw network connections between nodes
+    this.drawNetworkConnections();
+  }
+  
+  drawNetworkConnections() {
+    const connections = this.add.graphics();
+    connections.lineStyle(2, 0x00ff00, 0.4); // Green connections
+    
+    // Connect nodes in a logical pattern
+    for (let i = 0; i < this.nodes.length; i++) {
+      for (let j = i + 1; j < this.nodes.length; j++) {
+        // Only connect some nodes to create a network pattern
+        if ((i + j) % 3 === 0 || i === 0 || j === this.nodes.length - 1) {
+          const startNode = this.nodes[i];
+          const endNode = this.nodes[j];
+          
+          connections.beginPath();
+          connections.moveTo(startNode.x, startNode.y);
+          connections.lineTo(endNode.x, endNode.y);
+          connections.strokePath();
+        }
+      }
+    }
+    
+    // Add data packet animations
+    this.time.addEvent({
+      delay: 800,
+      callback: this.animateDataPackets,
+      callbackScope: this,
+      loop: true
+    });
+  }
+  
+  animateDataPackets() {
+    // Create data packets that travel between nodes
+    if (this.nodes && this.nodes.length > 0) {
+      const startNodeIndex = Math.floor(Math.random() * this.nodes.length);
+      let endNodeIndex;
+      
+      do {
+        endNodeIndex = Math.floor(Math.random() * this.nodes.length);
+      } while (endNodeIndex === startNodeIndex);
+      
+      const startNode = this.nodes[startNodeIndex];
+      const endNode = this.nodes[endNodeIndex];
+      
+      // Create packet (use existing 'packet' image if available)
+      try {
+        const packet = this.add.image(startNode.x, startNode.y, 'packet')
+          .setScale(0.03)
+          .setAlpha(0.7);
+        
+        // Animate packet along path
+        this.tweens.add({
+          targets: packet,
+          x: endNode.x,
+          y: endNode.y,
+          duration: 1500,
+          ease: 'Linear',
+          onComplete: () => {
+            packet.destroy();
+          }
+        });
+      } catch (e) {
+        // Fallback to a simple circle if packet image isn't available
+        const packet = this.add.circle(startNode.x, startNode.y, 5, 0x00ff00, 1);
+        
+        this.tweens.add({
+          targets: packet,
+          x: endNode.x,
+          y: endNode.y,
+          duration: 1500,
+          ease: 'Linear',
+          onComplete: () => {
+            packet.destroy();
+          }
+        });
+      }
+    }
+  }
+  
+  createButtons() {
+    // Start Game Button
     this.startGameButton = new UiButton(
       this,
       this.scale.width / 2,
@@ -48,8 +231,8 @@ class TitleScene extends Phaser.Scene {
       "Start",
       () => {
         this.clickSound.play();
-        this.titleTrack.stop();
-        this.scene.start("Game");
+        // Transition to loading screen before starting game
+        this.showLoadingScreen();
       }
     );
 
@@ -68,6 +251,7 @@ class TitleScene extends Phaser.Scene {
       }
     );
 
+    // Instructions button
     this.instructionsButton = new UiButton(
       this,
       this.scale.width / 2,
@@ -80,6 +264,98 @@ class TitleScene extends Phaser.Scene {
         this.showInstructions();
       }
     );
+    
+    // Add entrance animation for buttons
+    [this.startGameButton, this.tutorialButton, this.instructionsButton].forEach((button, index) => {
+      button.y += 20;
+      button.alpha = 0;
+      
+      this.tweens.add({
+        targets: button,
+        y: button.y - 20,
+        alpha: 1,
+        duration: 500,
+        delay: 300 + (index * 150),
+        ease: 'Back.easeOut'
+      });
+    });
+  }
+
+  showLoadingScreen() {
+    // Create overlay for loading screen
+    const overlay = this.add.rectangle(
+      0, 0, this.scale.width, this.scale.height, 0x000000, 0
+    ).setOrigin(0, 0);
+    
+    // Fade in overlay
+    this.tweens.add({
+      targets: overlay,
+      alpha: 0.9,
+      duration: 500,
+      onComplete: () => {
+        // Create loading screen elements
+        const loadingText = this.add.text(
+          this.scale.width / 2, 
+          this.scale.height / 2 - 50, 
+          'Loading...', 
+          {
+            font: '24px monospace',
+            fill: '#00ff00'
+          }
+        ).setOrigin(0.5);
+        
+        const progressBox = this.add.rectangle(
+          this.scale.width / 2,
+          this.scale.height / 2,
+          320,
+          40,
+          0x222222,
+          0.8
+        ).setOrigin(0.5);
+        
+        const progressBar = this.add.rectangle(
+          this.scale.width / 2 - 155,
+          this.scale.height / 2,
+          0,
+          30,
+          0x00ff00,
+          1
+        ).setOrigin(0, 0.5);
+        
+        const percentText = this.add.text(
+          this.scale.width / 2, 
+          this.scale.height / 2, 
+          '0%', 
+          {
+            font: '18px monospace',
+            fill: '#ffffff'
+          }
+        ).setOrigin(0.5);
+        
+        // Simulate loading progress
+        let progress = 0;
+        const progressInterval = this.time.addEvent({
+          delay: 30,
+          callback: () => {
+            progress += 1;
+            progressBar.width = Math.min(310 * (progress / 100), 310);
+            percentText.setText(`${progress}%`);
+            
+            // When loading completes
+            if (progress >= 100) {
+              progressInterval.remove();
+              
+              this.time.delayedCall(500, () => {
+                this.titleTrack.stop();
+                this.scene.start("Game");
+              });
+            }
+          },
+          callbackScope: this,
+          repeat: 100
+        });
+      }
+    });
   }
 
   showInstructions() {
@@ -144,12 +420,7 @@ class TitleScene extends Phaser.Scene {
         {
           fontSize: "16px",
           fill: "#ffffff",
-          // align: "center",
           lineSpacing: 4,
-          // wordWrap: {
-          //   height: this.scale.height / 2,
-          //   width: this.scale.width / 2,
-          // },
         }
       )
       .setOrigin(0.5);

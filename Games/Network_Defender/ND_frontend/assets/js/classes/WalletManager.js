@@ -97,7 +97,7 @@ class WalletManager {
     });
   }
 
-  updateDisplay() {
+  updateDisplay() { 
     this.coinText.setText(`${this.coins} CC`);
   }
 }

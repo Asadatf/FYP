@@ -322,7 +322,7 @@ class MessageHandler {
       .text(
         this.scene.scale.width / 2,
         this.scene.scale.height / 2 - 100,
-        `Available: ${this.scene.walletManager.coins} CC`,
+        // `Available: ${this.scene.walletManager.coins} CC`,
         {
           fontSize: "18px",
           fill: "#ffd700",
@@ -995,13 +995,71 @@ class MessageHandler {
       this.isSelectingWords = false;
 
       // Popup Menu setup
+       // Create a dark overlay for better focus
+      this.menuOverlay = this.scene.add.rectangle(
+        0, 0,
+        this.scene.scale.width, this.scene.scale.height,
+        0x000000, 0.5
+      ).setOrigin(0, 0);
+  
+      // Enhanced popup menu background
       this.menuBackground = this.scene.add.rectangle(
         this.scene.scale.width / 2,
         this.scene.scale.height / 2,
-        400,
-        300,
+        460,
+        320,
         0x000000,
-        0.7
+        0.85
+      );
+      
+      // Add a cyber-themed border
+      this.menuBorder = this.scene.add.graphics();
+      this.menuBorder.lineStyle(2, 0x00ffaa, 0.8);
+      this.menuBorder.strokeRect(
+        this.scene.scale.width / 2 - 230,
+        this.scene.scale.height / 2 - 160,
+        460,
+        320
+      );
+      
+      // Add corner accents
+      this.menuBorder.lineStyle(3, 0x00ffff, 1);
+      // Top-left corner
+      this.menuBorder.beginPath();
+      this.menuBorder.moveTo(this.scene.scale.width / 2 - 230, this.scene.scale.height / 2 - 140);
+      this.menuBorder.lineTo(this.scene.scale.width / 2 - 230, this.scene.scale.height / 2 - 160);
+      this.menuBorder.lineTo(this.scene.scale.width / 2 - 210, this.scene.scale.height / 2 - 160);
+      this.menuBorder.strokePath();
+      
+      // Top-right corner
+      this.menuBorder.beginPath();
+      this.menuBorder.moveTo(this.scene.scale.width / 2 + 210, this.scene.scale.height / 2 - 160);
+      this.menuBorder.lineTo(this.scene.scale.width / 2 + 230, this.scene.scale.height / 2 - 160);
+      this.menuBorder.lineTo(this.scene.scale.width / 2 + 230, this.scene.scale.height / 2 - 140);
+      this.menuBorder.strokePath();
+      
+      // Bottom-left corner
+      this.menuBorder.beginPath();
+      this.menuBorder.moveTo(this.scene.scale.width / 2 - 230, this.scene.scale.height / 2 + 140);
+      this.menuBorder.lineTo(this.scene.scale.width / 2 - 230, this.scene.scale.height / 2 + 160);
+      this.menuBorder.lineTo(this.scene.scale.width / 2 - 210, this.scene.scale.height / 2 + 160);
+      this.menuBorder.strokePath();
+      
+      // Bottom-right corner
+      this.menuBorder.beginPath();
+      this.menuBorder.moveTo(this.scene.scale.width / 2 + 210, this.scene.scale.height / 2 + 160);
+      this.menuBorder.lineTo(this.scene.scale.width / 2 + 230, this.scene.scale.height / 2 + 160);
+      this.menuBorder.lineTo(this.scene.scale.width / 2 + 230, this.scene.scale.height / 2 + 140);
+      this.menuBorder.strokePath();
+  
+      // Terminal header bar
+      this.headerBar = this.scene.add.rectangle(
+        this.scene.scale.width / 2,
+        this.scene.scale.height / 2 - 140,
+        458, 
+        30,
+        0x001a1a,
+        1
       );
 
       let promptText = this.lastMessage
@@ -1229,6 +1287,8 @@ class MessageHandler {
     if (this.menuBackground) this.menuBackground.destroy();
     if (this.menuText) this.menuText.destroy();
     if (this.messageInput) this.messageInput.destroy();
+    if (this.menuOverlay) this.menuOverlay.destroy();
+    if (this.menuBorder) this.menuBorder.destroy();
 
     // Destroy any additional menu elements
     if (this.menuElements) {

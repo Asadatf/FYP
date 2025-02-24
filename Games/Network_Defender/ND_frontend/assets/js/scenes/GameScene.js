@@ -21,12 +21,8 @@ class GameScene extends Phaser.Scene {
   }
 
   create() {
-    //Add background
-    this.background = this.add.image(0, 0, "background");
-    this.background.setOrigin(0, 0);
-    // Scale the background to fit the screen size
-    this.background.displayWidth = this.scale.width;
-    this.background.displayHeight = this.scale.height;
+    // Create cybersecurity-themed background with circuit patterns
+    this.createEnhancedBackground();
 
     // Add back button
     this.createBackButton();
@@ -108,7 +104,7 @@ class GameScene extends Phaser.Scene {
       this.decryptionPuzzle
     );
 
-    // Creating Controll Keys
+    // Creating Control Keys
     this.keys = this.input.keyboard.addKeys({
       space: Phaser.Input.Keyboard.KeyCodes.SPACE,
       x: Phaser.Input.Keyboard.KeyCodes.X,
@@ -124,8 +120,172 @@ class GameScene extends Phaser.Scene {
       this.keys[key].on("down", () => this.createKeyPressEffect(key));
     });
 
+    // Add interactive data nodes as decoration
+    this.createDataNodes();
+
     // Listen for timeUp event
     this.events.on("timeUp", this.handleTimeUp, this);
+  }
+
+  createEnhancedBackground() {
+    // First add the base image background
+    this.background = this.add.image(0, 0, "background");
+    this.background.setOrigin(0, 0);
+    this.background.displayWidth = this.scale.width;
+    this.background.displayHeight = this.scale.height;
+    
+    // Add a grid overlay to enhance the cybersecurity feel
+    this.createCyberGrid();
+    
+    // Add animated circuit elements
+    this.createCircuitElements();
+  }
+  
+  createCyberGrid() {
+    // Create a grid overlay
+    const grid = this.add.graphics();
+    grid.lineStyle(1, 0x00ffff, 0.15);  // Cyan lines, subtle opacity
+    
+    // Draw horizontal lines
+    const gridSize = 40;
+    for (let y = 0; y < this.scale.height; y += gridSize) {
+      grid.moveTo(0, y);
+      grid.lineTo(this.scale.width, y);
+    }
+    
+    // Draw vertical lines
+    for (let x = 0; x < this.scale.width; x += gridSize) {
+      grid.moveTo(x, 0);
+      grid.lineTo(x, this.scale.height);
+    }
+    
+    // Animate grid subtly
+    this.tweens.add({
+      targets: grid,
+      alpha: { from: 0.15, to: 0.05 },
+      duration: 3000,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+  }
+  
+  createCircuitElements() {
+    // Create circuit trace graphics
+    const circuits = this.add.graphics();
+    circuits.lineStyle(2, 0x00ffaa, 0.3);
+    
+    // Draw some horizontal circuit traces
+    for (let i = 0; i < 5; i++) {
+      const y = Math.random() * this.scale.height;
+      circuits.beginPath();
+      circuits.moveTo(0, y);
+      
+      // Create a zig-zag pattern
+      for (let x = 100; x < this.scale.width; x += 100) {
+        const offset = Math.random() > 0.5 ? 30 : -30;
+        circuits.lineTo(x, y + offset);
+      }
+      
+      circuits.strokePath();
+    }
+    
+    // Draw some vertical circuit traces
+    for (let i = 0; i < 5; i++) {
+      const x = Math.random() * this.scale.width;
+      circuits.beginPath();
+      circuits.moveTo(x, 0);
+      
+      // Create a zig-zag pattern
+      for (let y = 100; y < this.scale.height; y += 100) {
+        const offset = Math.random() > 0.5 ? 30 : -30;
+        circuits.lineTo(x + offset, y);
+      }
+      
+      circuits.strokePath();
+    }
+    
+    // Create animated circuit pulses
+    this.time.addEvent({
+      delay: 2000,
+      callback: this.createCircuitPulse,
+      callbackScope: this,
+      loop: true
+    });
+  }
+  
+  createCircuitPulse() {
+    // Choose a random circuit path and send a pulse down it
+    const isHorizontal = Math.random() > 0.5;
+    const position = Math.random() * (isHorizontal ? this.scale.height : this.scale.width);
+    
+    const pulse = this.add.circle(
+      isHorizontal ? 0 : position,
+      isHorizontal ? position : 0,
+      3,
+      0x00ffaa,
+      1
+    ).setAlpha(0.8);
+    
+    this.tweens.add({
+      targets: pulse,
+      x: isHorizontal ? this.scale.width : pulse.x,
+      y: isHorizontal ? pulse.y : this.scale.height,
+      duration: 2000,
+      ease: 'Linear',
+      onComplete: () => pulse.destroy()
+    });
+  }
+  
+  createDataNodes() {
+    // Create interactive data nodes that pulse
+    for (let i = 0; i < 8; i++) {
+      // Position nodes around the game area but away from critical gameplay elements
+      let x, y;
+      let validPosition = false;
+      
+      // Make sure nodes don't overlap with important game elements
+      while (!validPosition) {
+        x = Phaser.Math.Between(50, this.scale.width - 50);
+        y = Phaser.Math.Between(50, this.scale.height - 50);
+        
+        // Check distance from defender, receiver, and switches
+        const minDistanceFromElements = 150;
+        if (
+          Phaser.Math.Distance.Between(x, y, this.defender.x, this.defender.y) > minDistanceFromElements &&
+          Phaser.Math.Distance.Between(x, y, this.receiver.x, this.receiver.y) > minDistanceFromElements &&
+          Phaser.Math.Distance.Between(x, y, this.leftSwitch.x, this.leftSwitch.y) > minDistanceFromElements &&
+          Phaser.Math.Distance.Between(x, y, this.rightSwitch.x, this.rightSwitch.y) > minDistanceFromElements
+        ) {
+          validPosition = true;
+        }
+      }
+      
+      // Create the node
+      const node = this.add.circle(x, y, 6, 0x00ff88, 1);
+      
+      // Add pulsing animation
+      this.tweens.add({
+        targets: node,
+        scale: { from: 0.7, to: 1.3 },
+        alpha: { from: 0.7, to: 0.3 },
+        duration: 1200 + Math.random() * 800,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut'
+      });
+      
+      // Add a glow effect
+      const glow = this.add.circle(x, y, 12, 0x00ff88, 0.3);
+      this.tweens.add({
+        targets: glow,
+        scale: { from: 0.5, to: 1.5 },
+        alpha: { from: 0.3, to: 0 },
+        duration: 1500,
+        repeat: -1,
+        ease: 'Sine.easeOut'
+      });
+    }
   }
 
   createBackButton() {
@@ -256,43 +416,6 @@ class GameScene extends Phaser.Scene {
     });
   }
 
-  createCyberBackground() {
-    // Create a dark background
-    this.background = this.add.rectangle(
-      0,
-      0,
-      this.scale.width,
-      this.scale.height,
-      0x001a1a
-    );
-    this.background.setOrigin(0, 0);
-
-    // Add animated grid lines
-    this.gridGraphics = this.add.graphics();
-    this.gridGraphics.lineStyle(1, 0x00ff00, 0.3);
-
-    // Create vertical lines
-    for (let x = 0; x < this.scale.width; x += 50) {
-      this.gridGraphics.moveTo(x, 0);
-      this.gridGraphics.lineTo(x, this.scale.height);
-    }
-
-    // Create horizontal lines
-    for (let y = 0; y < this.scale.height; y += 50) {
-      this.gridGraphics.moveTo(0, y);
-      this.gridGraphics.lineTo(this.scale.width, y);
-    }
-
-    // Animate grid opacity
-    this.tweens.add({
-      targets: this.gridGraphics,
-      alpha: 0.1,
-      duration: 2000,
-      yoyo: true,
-      repeat: -1,
-    });
-  }
-
   createVisualEffects() {
     // Create a group for packet trail effects
     this.packetTrail = this.add.group();
@@ -305,6 +428,7 @@ class GameScene extends Phaser.Scene {
       loop: true,
     });
   }
+  
   createPacketTrail() {
     if (this.packet && this.packet.visible) {
       const trail = this.add.circle(
@@ -328,6 +452,7 @@ class GameScene extends Phaser.Scene {
       });
     }
   }
+  
   addGlowEffect(gameObject) {
     const glowGraphics = this.add.graphics();
     const glowColor = 0x00ff00;
@@ -349,6 +474,7 @@ class GameScene extends Phaser.Scene {
       },
     });
   }
+  
   createNetworkConnections() {
     this.connectionGraphics = this.add.graphics();
 
@@ -381,6 +507,7 @@ class GameScene extends Phaser.Scene {
       this.connectionGraphics.clear();
     }
   }
+  
   drawAnimatedConnection(graphics, x1, y1, x2, y2, progress) {
     // Draw base line
     graphics.beginPath();
@@ -400,37 +527,71 @@ class GameScene extends Phaser.Scene {
     }
   }
 
-  update() {
-    this.defender.update(this.keys, this.MessageHandler.menuActive);
+  // Updated update method for GameScene.js that fixes the interaction issue
+// Add this to your GameScene.js file
 
-    this.nearObstacle = false;
-    this.obstacles.children.iterate((obstacle) => {
-      if (
-        Phaser.Math.Distance.Between(
-          this.defender.x,
-          this.defender.y,
-          obstacle.x,
-          obstacle.y
-        ) < 100
-      ) {
-        this.nearObstacle = true;
+update() {
+  this.defender.update(this.keys, this.MessageHandler.menuActive);
+
+  this.nearObstacle = false;
+  let nearestObstacle = null;
+  let minDistance = Infinity;
+
+  // Find the nearest obstacle and check if player is near any obstacle
+  this.obstacles.children.iterate((obstacle) => {
+    const distance = Phaser.Math.Distance.Between(
+      this.defender.x,
+      this.defender.y,
+      obstacle.x,
+      obstacle.y
+    );
+    
+    if (distance < 100) {
+      this.nearObstacle = true;
+      
+      // Track the nearest obstacle
+      if (distance < minDistance) {
+        minDistance = distance;
+        nearestObstacle = obstacle;
       }
-    });
+    }
+  });
 
-    if (
-      this.nearObstacle &&
-      !this.MessageHandler.menuActive &&
-      this.pathManager.isPathValid()
-    ) {
-      this.interactText.setText("Press E to Interact").setVisible(true);
+  // Show interaction prompt when near an obstacle and when valid path exists
+  // Important: We no longer check if the object is part of the path - we allow interaction with configured devices
+  if (
+    this.nearObstacle &&
+    !this.MessageHandler.menuActive &&
+    this.pathManager.isPathValid()
+  ) {
+    // Position the prompt near the player and obstacle
+    this.interactText.setPosition(
+      nearestObstacle ? nearestObstacle.x : this.defender.x,
+      (nearestObstacle ? nearestObstacle.y : this.defender.y) - 50
+    );
+    
+    // Check if the switch is already configured (in the path)
+    const isConfigured = nearestObstacle && 
+                         this.pathManager.currentPath.includes(nearestObstacle);
+    
+    // Change prompt text based on whether the device is configured or not
+    if (isConfigured) {
+      this.interactText.setText("Press E to Send Message")
+                      .setFill("#00ffaa");
     } else {
-      this.interactText.setVisible(false);
+      this.interactText.setText("Press E to Interact")
+                      .setFill("#00ff00");
     }
-
-    // Show the context-specific menu when spacebar is pressed near an obstacle
-    if (this.keys.e.isDown && this.nearObstacle) {
-      this.nearObstacle = false;
-      this.MessageHandler.openMessagePopup();
-    }
+    
+    this.interactText.setVisible(true);
+  } else {
+    this.interactText.setVisible(false);
   }
+
+  // Show the context-specific menu when E is pressed near an obstacle
+  if (this.keys.e.isDown && this.nearObstacle) {
+    this.nearObstacle = false;
+    this.MessageHandler.openMessagePopup();
+  }
+}
 }
