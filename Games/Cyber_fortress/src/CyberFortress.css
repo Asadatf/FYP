@@ -1,0 +1,227 @@
+.game-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #1a1a1a;
+  border-radius: 10px;
+  color: white;
+}
+
+.game-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.status-bar {
+  display: flex;
+  justify-content: space-between;
+  background-color: #2d2d2d;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  background-color: #2d2d2d;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.grid-cell {
+  aspect-ratio: 1;
+  background-color: #3d3d3d;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  cursor: pointer;
+  position: relative;
+  transition: background-color 0.3s;
+}
+
+.grid-cell:hover {
+  background-color: #4d4d4d;
+}
+
+.defense-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.defense-button {
+  padding: 15px;
+  border: none;
+  border-radius: 8px;
+  background-color: #3d3d3d;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: background-color 0.3s;
+}
+
+.defense-button:hover {
+  background-color: #4d4d4d;
+}
+
+.defense-button.selected {
+  background-color: #0066cc;
+}
+
+.defense-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.warning-indicator {
+  position: absolute;
+  inset: 0;
+  border: 2px solid #ffbb00;
+  border-radius: 8px;
+  animation: pulse 2s infinite;
+  pointer-events: none;
+}
+
+.attack-animation {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: ping 1s ease-out;
+  pointer-events: none;
+}
+
+.legend {
+  background-color: #2d2d2d;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.legend-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes ping {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+/* Defense colors */
+.firewall { background-color: #0066cc; }
+.password { background-color: #00cc66; }
+.encryption { background-color: #9933cc; }
+
+/* Status colors */
+.credits { color: #0099ff; }
+.score { color: #00cc66; }
+.level { color: #ffbb00; }
+
+/* Cool background animation */
+.cyber-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, #000428, #004e92);
+  z-index: -1;
+  overflow: hidden;
+}
+
+.cyber-grid {
+  position: absolute;
+  width: 200%;
+  height: 200%;
+  background-image: 
+    linear-gradient(rgba(0, 100, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 100, 255, 0.1) 1px, transparent 1px);
+  background-size: 40px 40px;
+  transform: perspective(500px) rotateX(60deg);
+  animation: grid-move 20s linear infinite;
+}
+
+@keyframes grid-move {
+  0% {
+    transform: perspective(500px) rotateX(60deg) translateY(0);
+  }
+  100% {
+    transform: perspective(500px) rotateX(60deg) translateY(-40px);
+  }
+}
+
+/* Game Over Modal */
+.game-over-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.game-over-content {
+  background-color: #2d2d2d;
+  padding: 30px;
+  border-radius: 15px;
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+  border: 2px solid #0066cc;
+  box-shadow: 0 0 20px rgba(0, 102, 204, 0.5);
+}
+
+.game-over-title {
+  font-size: 32px;
+  color: #ff3333;
+  margin-bottom: 20px;
+}
+
+.game-over-stats {
+  margin-bottom: 20px;
+  font-size: 18px;
+}
+
+.restart-button {
+  background-color: #0066cc;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 18px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.restart-button:hover {
+  background-color: #0052a3;
+}
