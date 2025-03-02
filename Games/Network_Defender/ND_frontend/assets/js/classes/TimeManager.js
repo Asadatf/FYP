@@ -74,7 +74,7 @@ class TimeManager {
     const delta = currentTime - this.lastUpdate;
     this.lastUpdate = currentTime;
 
-    this.timeRemaining -= delta;
+    // this.timeRemaining -= delta;
 
     // Update display
     const seconds = Math.ceil(this.timeRemaining / 1000);

@@ -60,6 +60,772 @@ class MessageHandler {
     this.wordSelectionText = null;
     this.isSelectingWords = false;
   }
+
+  // RSA
+  visualizeRSAEncryption(word) {
+    // Clear previous visualizations
+    if (this.shiftVisualizationObjects) {
+      this.shiftVisualizationObjects.forEach((obj) => obj.destroy());
+    }
+    this.shiftVisualizationObjects = [];
+
+    const popupWidth = 600;
+    const popupHeight = 500;
+    const centerX = this.scene.scale.width / 2;
+    const centerY = this.scene.scale.height / 2;
+
+    // Create background for visualization
+    const background = this.scene.add.rectangle(
+      centerX,
+      centerY,
+      popupWidth,
+      popupHeight,
+      0x001a2e,
+      0.9
+    );
+    this.shiftVisualizationObjects.push(background);
+
+    // Generate RSA keys (simple for educational purposes)
+    // Using small prime numbers for demonstration
+    const p = 3;
+    const q = 11;
+    const n = p * q;
+    const phi = (p - 1) * (q - 1);
+    const e = 3; // Common public exponent
+
+    // Calculate private key d (multiplicative inverse of e mod phi)
+    let d = 0;
+    for (let i = 1; i < phi; i++) {
+      if ((e * i) % phi === 1) {
+        d = i;
+        break;
+      }
+    }
+
+    // Store keys for reference
+    this.rsaPublicKey = { e, n };
+    this.rsaPrivateKey = { d, n };
+
+    // Add header with animated effect
+    const titleText = this.scene.add
+      .text(centerX, centerY - 200, "RSA Encryption Challenge", {
+        fontSize: "28px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+        align: "center",
+      })
+      .setOrigin(0.5);
+    this.shiftVisualizationObjects.push(titleText);
+
+    // Add glowing effect to title
+    this.scene.tweens.add({
+      targets: titleText,
+      alpha: 0.7,
+      duration: 1000,
+      yoyo: true,
+      repeat: -1,
+    });
+
+    // Display mission brief
+    const missionText = this.scene.add
+      .text(
+        centerX,
+        centerY - 165,
+        "Your mission: Apply the RSA encryption formula",
+        {
+          fontSize: "18px",
+          fill: "#00ffff",
+        }
+      )
+      .setOrigin(0.5);
+    this.shiftVisualizationObjects.push(missionText);
+
+    // Create formula breakdown container
+    const breakdownContainer = this.scene.add.container(centerX, centerY - 110);
+    this.shiftVisualizationObjects.push(breakdownContainer);
+
+    // Formula breakdown
+    const formulaBreakdown = [
+      { text: "C", color: "#ffffff", explanation: "= encrypted value" },
+      {
+        text: "M",
+        color: "#00ff00",
+        explanation: "= message character (as ASCII)",
+      },
+      {
+        text: "e",
+        color: "#ffff00",
+        explanation: `= public exponent (${this.rsaPublicKey.e})`,
+      },
+      {
+        text: "n",
+        color: "#ff9900",
+        explanation: `= modulus (${this.rsaPublicKey.n})`,
+      },
+    ];
+
+    // Calculate total width for centering
+    let totalWidth = 0;
+    const padding = 20;
+    formulaBreakdown.forEach((item) => {
+      // Estimate width (rough calculation)
+      totalWidth += 80 + padding;
+    });
+
+    // Position starting from left
+    let xPos = -(totalWidth / 2);
+
+    // Create formula breakdown items
+    formulaBreakdown.forEach((item) => {
+      const itemBg = this.scene.add.rectangle(xPos, 0, 80, 60, 0x222222, 0.8);
+      itemBg.setStrokeStyle(1, 0x444444);
+      breakdownContainer.add(itemBg);
+
+      // Term
+      const term = this.scene.add
+        .text(xPos, -15, item.text, {
+          fontSize: "24px",
+          fill: item.color,
+          fontStyle: "bold",
+        })
+        .setOrigin(0.5);
+      breakdownContainer.add(term);
+
+      // Explanation
+      const explanation = this.scene.add
+        .text(xPos, 15, item.explanation, {
+          fontSize: "12px",
+          fill: "#ffffff",
+          align: "center",
+          wordWrap: { width: 75 },
+        })
+        .setOrigin(0.5);
+      breakdownContainer.add(explanation);
+
+      // Move to next position
+      xPos += 80 + padding;
+    });
+
+    // Hide initially and show with animation after a short delay
+    breakdownContainer.setAlpha(0);
+    breakdownContainer.setScale(0.8);
+    this.scene.time.delayedCall(1000, () => {
+      this.scene.tweens.add({
+        targets: breakdownContainer,
+        alpha: 1,
+        scale: 1,
+        duration: 500,
+        ease: "Back.easeOut",
+      });
+    });
+
+    // Display original message
+    const originalWordText = this.scene.add
+      .text(centerX, centerY - 40, `Message to encrypt: "${word}"`, {
+        fontSize: "22px",
+        fill: "#ffffff",
+      })
+      .setOrigin(0.5);
+    this.shiftVisualizationObjects.push(originalWordText);
+
+    // Display keys section with nice styling
+    const keysBackground = this.scene.add.rectangle(
+      centerX,
+      centerY,
+      popupWidth - 100,
+      50,
+      0x0f3460,
+      1
+    );
+    this.shiftVisualizationObjects.push(keysBackground);
+
+    // Add keys with different colors
+    const publicKeyText = this.scene.add
+      .text(
+        centerX,
+        centerY,
+        `Public Key: (e=${this.rsaPublicKey.e}, n=${this.rsaPublicKey.n})`,
+        {
+          fontSize: "20px",
+          fill: "#00ff00",
+        }
+      )
+      .setOrigin(0.5);
+    this.shiftVisualizationObjects.push(publicKeyText);
+
+    // Add helpful instructions for first-time users
+    const instructionsBox = this.scene.add.rectangle(
+      centerX,
+      centerY + 65,
+      popupWidth - 50,
+      80,
+      0x222244,
+      0.8
+    );
+    this.shiftVisualizationObjects.push(instructionsBox);
+
+    const instructionsText = this.scene.add
+      .text(
+        centerX,
+        centerY + 65,
+        "HOW TO ENTER THE FORMULA:\n" +
+          "1. Type only the values (not the variable names)\n" +
+          "2. For this key, enter: " +
+          this.rsaPublicKey.e +
+          " mod " +
+          this.rsaPublicKey.n +
+          " or " +
+          this.rsaPublicKey.e +
+          "%" +
+          this.rsaPublicKey.n +
+          "\n" +
+          "3. Press ENTER or click VERIFY when done",
+        {
+          fontSize: "16px",
+          fill: "#ffff00",
+          align: "center",
+          lineSpacing: 5,
+        }
+      )
+      .setOrigin(0.5);
+    this.shiftVisualizationObjects.push(instructionsText);
+
+    // Example container with animation to draw attention
+    const exampleContainer = this.scene.add.container(
+      centerX + 200,
+      centerY + 10
+    );
+    this.shiftVisualizationObjects.push(exampleContainer);
+
+    // Example background with arrow
+    const exampleBg = this.scene.add.graphics();
+    exampleBg.fillStyle(0x004400, 0.8);
+    exampleBg.fillRoundedRect(-80, -25, 160, 50, 10);
+    exampleBg.lineStyle(2, 0x00ff00, 1);
+    exampleBg.strokeRoundedRect(-80, -25, 160, 50, 10);
+    exampleContainer.add(exampleBg);
+
+    // Example text
+    const exampleText = this.scene.add
+      .text(0, 0, "Example:\nC = M^3 mod 33", {
+        fontSize: "14px",
+        fill: "#ffffff",
+        align: "center",
+      })
+      .setOrigin(0.5);
+    exampleContainer.add(exampleText);
+
+    // Add a subtle animation to draw attention to the example
+    this.scene.tweens.add({
+      targets: exampleContainer,
+      y: centerY + 20,
+      duration: 1500,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut",
+    });
+
+    // Display RSA formula instruction
+    const formulaText = this.scene.add
+      .text(centerX, centerY + 130, "Enter the RSA formula:", {
+        fontSize: "20px",
+        fill: "#ffffff",
+      })
+      .setOrigin(0.5);
+    this.shiftVisualizationObjects.push(formulaText);
+
+    // Create input field background
+    const inputBackground = this.scene.add.rectangle(
+      centerX,
+      centerY + 160,
+      300,
+      40,
+      0x333333,
+      1
+    );
+    inputBackground.setStrokeStyle(2, 0x00ff00);
+    this.shiftVisualizationObjects.push(inputBackground);
+
+    // Create fixed prefix text (C = M^)
+    const prefixText = this.scene.add
+      .text(centerX - 140, centerY + 160, "C = M^", {
+        fontSize: "20px",
+        fill: "#ffffff",
+      })
+      .setOrigin(0, 0.5);
+    this.shiftVisualizationObjects.push(prefixText);
+
+    // Get width of prefix text to position user input correctly
+    const prefixWidth = prefixText.width;
+
+    // User answer field - what they need to type
+    this.rsaUserInput = "";
+    this.rsaCorrectAnswer = `${this.rsaPublicKey.e} mod ${this.rsaPublicKey.n}`;
+
+    // Create answer text that updates as user types - positioned AFTER the prefix
+    this.rsaAnswerText = this.scene.add
+      .text(
+        centerX - 140 + prefixWidth,
+        centerY + 160,
+        this.rsaUserInput + "_",
+        {
+          fontSize: "20px",
+          fill: "#00ff00",
+        }
+      )
+      .setOrigin(0, 0.5);
+    this.shiftVisualizationObjects.push(this.rsaAnswerText);
+
+    // Show the ASCII conversion as a hint
+    const charConversions = [];
+    for (let i = 0; i < word.length; i++) {
+      const char = word[i];
+      const ascii = char.charCodeAt(0);
+      charConversions.push(`${char} = ${ascii}`);
+    }
+
+    const asciiText = this.scene.add
+      .text(
+        centerX,
+        centerY + 200,
+        `ASCII values: ${charConversions.join(", ")}`,
+        {
+          fontSize: "16px",
+          fill: "#ffff00",
+        }
+      )
+      .setOrigin(0.5);
+    this.shiftVisualizationObjects.push(asciiText);
+
+    // Create submit button
+    const submitButton = this.scene.add
+      .rectangle(centerX, centerY + 240, 160, 50, 0x004400, 1)
+      .setInteractive();
+    submitButton.setStrokeStyle(2, 0x00ff00);
+    this.shiftVisualizationObjects.push(submitButton);
+
+    const submitText = this.scene.add
+      .text(centerX, centerY + 240, "VERIFY FORMULA", {
+        fontSize: "18px",
+        fill: "#ffffff",
+      })
+      .setOrigin(0.5);
+    this.shiftVisualizationObjects.push(submitText);
+
+    // Add pulsing effect to button
+    this.scene.tweens.add({
+      targets: [submitButton, submitText],
+      scaleX: 1.05,
+      scaleY: 1.05,
+      duration: 800,
+      yoyo: true,
+      repeat: -1,
+    });
+
+    // Status message text (for feedback)
+    this.rsaStatusText = this.scene.add
+      .text(centerX, centerY + 280, "", {
+        fontSize: "18px",
+        fill: "#ffffff",
+      })
+      .setOrigin(0.5);
+    this.shiftVisualizationObjects.push(this.rsaStatusText);
+
+    // Set up keyboard input handler
+    this.setupRSAInputHandler();
+
+    // Add hover effects to button
+    submitButton.on("pointerover", () => {
+      submitButton.fillColor = 0x006600;
+      submitText.setScale(1.1);
+    });
+
+    submitButton.on("pointerout", () => {
+      submitButton.fillColor = 0x004400;
+      submitText.setScale(1.0);
+    });
+
+    // Add click handler to submit button
+    submitButton.on("pointerdown", () => {
+      this.verifyRSAFormula(word);
+    });
+  }
+
+  // Set up keyboard input handler for RSA formula
+  setupRSAInputHandler() {
+    // Remove any existing keyboard listeners
+    if (this.keydownListener) {
+      this.scene.input.keyboard.off("keydown", this.keydownListener);
+    }
+
+    // Create new listener for RSA input
+    this.keydownListener = (event) => {
+      console.log("Key pressed:", event.key); // Debug log
+
+      // Handle backspace key
+      if (event.key === "Backspace") {
+        // Make sure there's text to delete
+        if (this.rsaUserInput.length > 0) {
+          this.rsaUserInput = this.rsaUserInput.slice(0, -1);
+          console.log("Backspace pressed, new input:", this.rsaUserInput); // Debug log
+        }
+      }
+      // Handle Enter key for submission
+      else if (event.key === "Enter") {
+        this.verifyRSAFormula(this.selectedWords[0]);
+      }
+      // Handle alphanumeric and special keys for formula
+      else if (/^[0-9a-z\s^%mod]$/i.test(event.key)) {
+        this.rsaUserInput += event.key;
+      }
+
+      // Update the text display with cursor
+      this.rsaAnswerText.setText(this.rsaUserInput + "_");
+    };
+
+    // Add the keyboard listener
+    this.scene.input.keyboard.on("keydown", this.keydownListener);
+
+    // Ensure this input field has focus
+    this.scene.input.keyboard.enabled = true;
+  }
+
+  // Verify the RSA formula entered by the user
+  verifyRSAFormula(word) {
+    console.log("Verifying formula:", this.rsaUserInput);
+    console.log("Correct answer:", this.rsaCorrectAnswer);
+
+    // Clean up user input (remove extra spaces, standardize format)
+    const cleanInput = this.rsaUserInput
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .trim();
+
+    // Check various valid formats of the answer
+    const validFormats = [
+      `${this.rsaPublicKey.e} mod ${this.rsaPublicKey.n}`,
+      `${this.rsaPublicKey.e}mod${this.rsaPublicKey.n}`,
+      `${this.rsaPublicKey.e}%${this.rsaPublicKey.n}`,
+    ];
+
+    const isCorrect = validFormats.some(
+      (format) =>
+        cleanInput === format.toLowerCase() ||
+        cleanInput === format.toLowerCase().replace(/\s+/g, "")
+    );
+
+    if (isCorrect) {
+      // Show success message
+      this.rsaStatusText
+        .setText("Correct! Encrypting message...")
+        .setColor("#00ff00");
+
+      // Remove keyboard listener
+      if (this.keydownListener) {
+        this.scene.input.keyboard.off("keydown", this.keydownListener);
+      }
+
+      // Proceed with encryption after a short delay
+      this.scene.time.delayedCall(1500, () => {
+        // Calculate encryption and proceed
+        const encryptedData = this.rsaEncrypt(word);
+        const encryptedString = this.rsaEncryptedToString(encryptedData);
+
+        // Show encryption result
+        this.showRSAEncryptionResult(word, encryptedData, encryptedString);
+      });
+    } else {
+      // Show error message
+      this.rsaStatusText.setText("Incorrect. Try again!").setColor("#ff0000");
+
+      // Shake the input field
+      this.scene.tweens.add({
+        targets: this.rsaAnswerText,
+        x: { from: this.rsaAnswerText.x - 5, to: this.rsaAnswerText.x },
+        duration: 50,
+        yoyo: true,
+        repeat: 3,
+      });
+    }
+  }
+
+  // Set up keyboard input handler for RSA formula
+  setupRSAInputHandler() {
+    // Remove any existing keyboard listeners
+    if (this.keydownListener) {
+      this.scene.input.keyboard.off("keydown", this.keydownListener);
+    }
+
+    // Create new listener for RSA input
+    this.keydownListener = (event) => {
+      // Handle backspace
+      if (event.key === "Backspace") {
+        // Make sure there's text to delete
+        if (this.rsaUserInput.length > 0) {
+          this.rsaUserInput = this.rsaUserInput.slice(0, -1);
+        }
+      }
+      // Handle Enter key for submission
+      else if (event.key === "Enter") {
+        this.verifyRSAFormula(this.selectedWords[0]);
+      }
+      // Handle alphanumeric and special keys for formula
+      else if (/^[0-9a-z\s^%mod]$/i.test(event.key)) {
+        this.rsaUserInput += event.key;
+      }
+
+      // Update ONLY the user input text (not the prefix)
+      this.rsaAnswerText.setText(this.rsaUserInput + "_");
+    };
+
+    // Add the keyboard listener
+    this.scene.input.keyboard.on("keydown", this.keydownListener);
+  }
+
+  // Verify the RSA formula entered by the user
+  verifyRSAFormula(word) {
+    console.log("Verifying formula:", this.rsaUserInput);
+    console.log("Correct answer:", this.rsaCorrectAnswer);
+
+    // Clean up user input (remove extra spaces, standardize format)
+    const cleanInput = this.rsaUserInput
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .trim();
+
+    // Check various valid formats of the answer
+    const validFormats = [
+      `${this.rsaPublicKey.e} mod ${this.rsaPublicKey.n}`,
+      `${this.rsaPublicKey.e}mod${this.rsaPublicKey.n}`,
+      `${this.rsaPublicKey.e}%${this.rsaPublicKey.n}`,
+    ];
+
+    const isCorrect = validFormats.some(
+      (format) =>
+        cleanInput === format.toLowerCase() ||
+        cleanInput === format.toLowerCase().replace(/\s+/g, "")
+    );
+
+    if (isCorrect) {
+      // Show success message
+      this.rsaStatusText
+        .setText("Correct! Encrypting message...")
+        .setColor("#00ff00");
+
+      // Remove keyboard listener
+      if (this.keydownListener) {
+        this.scene.input.keyboard.off("keydown", this.keydownListener);
+      }
+
+      // Proceed with encryption after a short delay
+      this.scene.time.delayedCall(1500, () => {
+        // Calculate encryption and proceed
+        const encryptedData = this.rsaEncrypt(word);
+        const encryptedString = this.rsaEncryptedToString(encryptedData);
+
+        // Show encryption result
+        this.showRSAEncryptionResult(word, encryptedData, encryptedString);
+      });
+    } else {
+      // Show error message
+      this.rsaStatusText.setText("Incorrect. Try again!").setColor("#ff0000");
+
+      // Shake the input field
+      this.scene.tweens.add({
+        targets: this.rsaAnswerText,
+        x: { from: this.rsaAnswerText.x - 5, to: this.rsaAnswerText.x },
+        duration: 50,
+        yoyo: true,
+        repeat: 3,
+      });
+    }
+  }
+
+  // RSA encryption method
+  rsaEncrypt(message) {
+    return message.split("").map((char) => {
+      // Convert character to number (ASCII code)
+      const charCode = char.charCodeAt(0);
+      // Apply encryption formula: c = m^e mod n
+      let encrypted = 1;
+      for (let i = 0; i < this.rsaPublicKey.e; i++) {
+        encrypted = (encrypted * charCode) % this.rsaPublicKey.n;
+      }
+      return encrypted;
+    });
+  }
+
+  rsaEncryptedToString(encryptedArray) {
+    return encryptedArray.join("|");
+  }
+
+  // Show the RSA encryption result
+  showRSAEncryptionResult(word, encryptedData, encryptedString) {
+    // Clear previous visualization
+    this.shiftVisualizationObjects.forEach((obj) => {
+      this.scene.tweens.killTweensOf(obj);
+      obj.destroy();
+    });
+    this.shiftVisualizationObjects = [];
+
+    // Create new results display
+    const popupWidth = 550;
+    const popupHeight = 400;
+    const centerX = this.scene.scale.width / 2;
+    const centerY = this.scene.scale.height / 2;
+
+    // Background
+    const background = this.scene.add.rectangle(
+      centerX,
+      centerY,
+      popupWidth,
+      popupHeight,
+      0x001a2e,
+      0.9
+    );
+    this.shiftVisualizationObjects.push(background);
+
+    // Title
+    const titleText = this.scene.add
+      .text(centerX, centerY - 150, "Encryption Complete!", {
+        fontSize: "28px",
+        fill: "#00ff00",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5);
+    this.shiftVisualizationObjects.push(titleText);
+
+    // Original and encrypted message
+    const originalText = this.scene.add
+      .text(centerX, centerY - 90, `Original: ${word}`, {
+        fontSize: "22px",
+        fill: "#ffffff",
+      })
+      .setOrigin(0.5);
+    this.shiftVisualizationObjects.push(originalText);
+
+    const encryptedText = this.scene.add
+      .text(centerX, centerY - 50, `Encrypted: ${encryptedString}`, {
+        fontSize: "22px",
+        fill: "#00ffff",
+      })
+      .setOrigin(0.5);
+    this.shiftVisualizationObjects.push(encryptedText);
+
+    // Show step-by-step calculation
+    const stepTitle = this.scene.add
+      .text(centerX, centerY, "Step-by-step calculation:", {
+        fontSize: "20px",
+        fill: "#ffffff",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5);
+    this.shiftVisualizationObjects.push(stepTitle);
+
+    let stepText = "";
+    word.split("").forEach((char, index) => {
+      const charCode = char.charCodeAt(0);
+      stepText += `${char}(${charCode}) → ${charCode}^${this.rsaPublicKey.e} mod ${this.rsaPublicKey.n} = ${encryptedData[index]}\n`;
+    });
+
+    const calculationText = this.scene.add
+      .text(centerX, centerY + 60, stepText, {
+        fontSize: "18px",
+        fill: "#00ff00",
+        align: "center",
+      })
+      .setOrigin(0.5);
+    this.shiftVisualizationObjects.push(calculationText);
+
+    // Continue button
+    const continueButton = this.scene.add
+      .rectangle(centerX, centerY + 140, 160, 50, 0x004400, 1)
+      .setInteractive();
+    continueButton.setStrokeStyle(2, 0x00ff00);
+    this.shiftVisualizationObjects.push(continueButton);
+
+    const continueText = this.scene.add
+      .text(centerX, centerY + 140, "CONTINUE", {
+        fontSize: "20px",
+        fill: "#ffffff",
+      })
+      .setOrigin(0.5);
+    this.shiftVisualizationObjects.push(continueText);
+
+    // Add hover effects
+    continueButton.on("pointerover", () => {
+      continueButton.fillColor = 0x006600;
+      continueText.setScale(1.1);
+    });
+
+    continueButton.on("pointerout", () => {
+      continueButton.fillColor = 0x004400;
+      continueText.setScale(1.0);
+    });
+
+    // Add click handler
+    continueButton.on("pointerdown", () => {
+      // Clean up visualization
+      this.shiftVisualizationObjects.forEach((obj) => {
+        this.scene.tweens.killTweensOf(obj);
+        obj.destroy();
+      });
+      this.shiftVisualizationObjects = [];
+
+      // Process the encrypted word and continue
+      this.handleRSAEncryptedWord(word, encryptedData, encryptedString);
+    });
+  }
+
+  // Handle RSA encrypted word (process it and continue)
+  handleRSAEncryptedWord(originalWord, encryptedData, encryptedString) {
+    // Find the index of the current word being encrypted
+    const wordIndex = this.tokenizedMessage.indexOf(originalWord);
+
+    // Replace the current word with its encrypted version
+    this.tokenizedMessage[wordIndex] = encryptedString;
+
+    // Update the corresponding word text object
+    if (this.wordTextObjects[wordIndex]) {
+      this.wordTextObjects[wordIndex].setText(encryptedString);
+      this.wordTextObjects[wordIndex].setBackgroundColor("#ff0000");
+    }
+
+    // Remove the processed word from selectedWords
+    this.selectedWords.shift();
+
+    // Reconstruct the full encrypted message
+    this.encryptedMessage = this.tokenizedMessage.join(" ");
+    console.log("Partially Encrypted Message (RSA):", this.encryptedMessage);
+
+    // Check if we still have words to encrypt
+    if (this.selectedWords.length > 0) {
+      console.log(
+        "Preparing to encrypt next word with RSA:",
+        this.selectedWords[0]
+      );
+
+      // Hide all word text objects to prevent overlap
+      this.wordTextObjects.forEach((wordText) => {
+        wordText.setVisible(false);
+      });
+
+      // Small delay to ensure clean transition
+      this.scene.time.delayedCall(100, () => {
+        if (this.encryptionMethod === "rsa") {
+          this.visualizeRSAEncryption(this.selectedWords[0]);
+        } else if (this.encryptionMethod === "manual") {
+          this.visualizeCaesarCipherShift(this.selectedWords[0]);
+        } else {
+          this.animateCaesarCipherEncryption();
+        }
+      });
+    } else {
+      console.log("All words encrypted. Launching packet.");
+      this.launchEncryptedPacket();
+    }
+  }
+
   visualizeCaesarCipherShift(word) {
     // Clear previous visualizations
     if (this.shiftVisualizationObjects) {
@@ -299,7 +1065,7 @@ class MessageHandler {
       this.scene.scale.width / 2,
       this.scene.scale.height / 2,
       500,
-      400,
+      500, // Increased height to accommodate RSA button
       0x000000,
       0.8
     );
@@ -307,7 +1073,7 @@ class MessageHandler {
     const titleText = this.scene.add
       .text(
         this.scene.scale.width / 2,
-        this.scene.scale.height / 2 - 150,
+        this.scene.scale.height / 2 - 200,
         "Choose Encryption Method",
         {
           fontSize: "24px",
@@ -321,8 +1087,8 @@ class MessageHandler {
     const balanceText = this.scene.add
       .text(
         this.scene.scale.width / 2,
-        this.scene.scale.height / 2 - 100,
-        // `Available: ${this.scene.walletManager.coins} CC`,
+        this.scene.scale.height / 2 - 150,
+        `Available: ${this.scene.walletManager.coins} CC`,
         {
           fontSize: "18px",
           fill: "#ffd700",
@@ -335,7 +1101,7 @@ class MessageHandler {
     const autoEncryptButton = this.scene.add
       .text(
         this.scene.scale.width / 2,
-        this.scene.scale.height / 2 - 50,
+        this.scene.scale.height / 2 - 80,
         "Automatic Encryption\nCost: 20 CC | Time: 5s",
         {
           fontSize: "20px",
@@ -358,12 +1124,12 @@ class MessageHandler {
         }
       });
 
-    // Manual Encryption Button
+    // Manual Encryption Button (Caesar Cipher)
     const manualEncryptButton = this.scene.add
       .text(
         this.scene.scale.width / 2,
-        this.scene.scale.height / 2 + 50,
-        "Manual Encryption\nCost: 5 CC | Time: 15s",
+        this.scene.scale.height / 2,
+        "Caesar Cipher (Manual)\nCost: 5 CC | Time: 15s",
         {
           fontSize: "20px",
           fill: "#0000ff",
@@ -386,35 +1152,66 @@ class MessageHandler {
         }
       });
 
+    // RSA Encryption Button
+    const rsaEncryptButton = this.scene.add
+      .text(
+        this.scene.scale.width / 2,
+        this.scene.scale.height / 2 + 80,
+        "RSA Encryption\nCost: 15 CC | Time: 10s",
+        {
+          fontSize: "20px",
+          fill: "#ff9900",
+          backgroundColor: "#663300",
+          padding: 10,
+          align: "center",
+        }
+      )
+      .setOrigin(0.5)
+      .setInteractive()
+      .on("pointerdown", () => {
+        if (this.scene.walletManager.spend(15)) {
+          this.closePopup();
+          this.isEncrypting = true;
+          this.encryptionMethod = "rsa";
+          const firstWord = this.selectedWords[0];
+          // Use the direct visualization method instead of startRSAEncryption
+          this.visualizeRSAEncryption(firstWord);
+        } else {
+          this.showInsufficientFundsError();
+        }
+      });
+
     // Add hover effects
-    [autoEncryptButton, manualEncryptButton].forEach((button) => {
-      button.on("pointerover", () => {
-        button.setScale(1.1);
-        this.scene.tweens.add({
-          targets: button,
-          alpha: 0.8,
-          duration: 100,
+    [autoEncryptButton, manualEncryptButton, rsaEncryptButton].forEach(
+      (button) => {
+        button.on("pointerover", () => {
+          button.setScale(1.1);
+          this.scene.tweens.add({
+            targets: button,
+            alpha: 0.8,
+            duration: 100,
+          });
         });
-      });
-      button.on("pointerout", () => {
-        button.setScale(1);
-        this.scene.tweens.add({
-          targets: button,
-          alpha: 1,
-          duration: 100,
+        button.on("pointerout", () => {
+          button.setScale(1);
+          this.scene.tweens.add({
+            targets: button,
+            alpha: 1,
+            duration: 100,
+          });
         });
-      });
-    });
+      }
+    );
 
     // Store elements for cleanup
     this.menuElements = [
       this.menuBackground,
       titleText,
+      balanceText,
       autoEncryptButton,
       manualEncryptButton,
+      rsaEncryptButton,
     ];
-
-    // this.startEncryptionTimer();
   }
 
   showInsufficientFundsError() {
@@ -995,13 +1792,18 @@ class MessageHandler {
       this.isSelectingWords = false;
 
       // Popup Menu setup
-       // Create a dark overlay for better focus
-      this.menuOverlay = this.scene.add.rectangle(
-        0, 0,
-        this.scene.scale.width, this.scene.scale.height,
-        0x000000, 0.5
-      ).setOrigin(0, 0);
-  
+      // Create a dark overlay for better focus
+      this.menuOverlay = this.scene.add
+        .rectangle(
+          0,
+          0,
+          this.scene.scale.width,
+          this.scene.scale.height,
+          0x000000,
+          0.5
+        )
+        .setOrigin(0, 0);
+
       // Enhanced popup menu background
       this.menuBackground = this.scene.add.rectangle(
         this.scene.scale.width / 2,
@@ -1011,7 +1813,7 @@ class MessageHandler {
         0x000000,
         0.85
       );
-      
+
       // Add a cyber-themed border
       this.menuBorder = this.scene.add.graphics();
       this.menuBorder.lineStyle(2, 0x00ffaa, 0.8);
@@ -1021,42 +1823,78 @@ class MessageHandler {
         460,
         320
       );
-      
+
       // Add corner accents
       this.menuBorder.lineStyle(3, 0x00ffff, 1);
       // Top-left corner
       this.menuBorder.beginPath();
-      this.menuBorder.moveTo(this.scene.scale.width / 2 - 230, this.scene.scale.height / 2 - 140);
-      this.menuBorder.lineTo(this.scene.scale.width / 2 - 230, this.scene.scale.height / 2 - 160);
-      this.menuBorder.lineTo(this.scene.scale.width / 2 - 210, this.scene.scale.height / 2 - 160);
+      this.menuBorder.moveTo(
+        this.scene.scale.width / 2 - 230,
+        this.scene.scale.height / 2 - 140
+      );
+      this.menuBorder.lineTo(
+        this.scene.scale.width / 2 - 230,
+        this.scene.scale.height / 2 - 160
+      );
+      this.menuBorder.lineTo(
+        this.scene.scale.width / 2 - 210,
+        this.scene.scale.height / 2 - 160
+      );
       this.menuBorder.strokePath();
-      
+
       // Top-right corner
       this.menuBorder.beginPath();
-      this.menuBorder.moveTo(this.scene.scale.width / 2 + 210, this.scene.scale.height / 2 - 160);
-      this.menuBorder.lineTo(this.scene.scale.width / 2 + 230, this.scene.scale.height / 2 - 160);
-      this.menuBorder.lineTo(this.scene.scale.width / 2 + 230, this.scene.scale.height / 2 - 140);
+      this.menuBorder.moveTo(
+        this.scene.scale.width / 2 + 210,
+        this.scene.scale.height / 2 - 160
+      );
+      this.menuBorder.lineTo(
+        this.scene.scale.width / 2 + 230,
+        this.scene.scale.height / 2 - 160
+      );
+      this.menuBorder.lineTo(
+        this.scene.scale.width / 2 + 230,
+        this.scene.scale.height / 2 - 140
+      );
       this.menuBorder.strokePath();
-      
+
       // Bottom-left corner
       this.menuBorder.beginPath();
-      this.menuBorder.moveTo(this.scene.scale.width / 2 - 230, this.scene.scale.height / 2 + 140);
-      this.menuBorder.lineTo(this.scene.scale.width / 2 - 230, this.scene.scale.height / 2 + 160);
-      this.menuBorder.lineTo(this.scene.scale.width / 2 - 210, this.scene.scale.height / 2 + 160);
+      this.menuBorder.moveTo(
+        this.scene.scale.width / 2 - 230,
+        this.scene.scale.height / 2 + 140
+      );
+      this.menuBorder.lineTo(
+        this.scene.scale.width / 2 - 230,
+        this.scene.scale.height / 2 + 160
+      );
+      this.menuBorder.lineTo(
+        this.scene.scale.width / 2 - 210,
+        this.scene.scale.height / 2 + 160
+      );
       this.menuBorder.strokePath();
-      
+
       // Bottom-right corner
       this.menuBorder.beginPath();
-      this.menuBorder.moveTo(this.scene.scale.width / 2 + 210, this.scene.scale.height / 2 + 160);
-      this.menuBorder.lineTo(this.scene.scale.width / 2 + 230, this.scene.scale.height / 2 + 160);
-      this.menuBorder.lineTo(this.scene.scale.width / 2 + 230, this.scene.scale.height / 2 + 140);
+      this.menuBorder.moveTo(
+        this.scene.scale.width / 2 + 210,
+        this.scene.scale.height / 2 + 160
+      );
+      this.menuBorder.lineTo(
+        this.scene.scale.width / 2 + 230,
+        this.scene.scale.height / 2 + 160
+      );
+      this.menuBorder.lineTo(
+        this.scene.scale.width / 2 + 230,
+        this.scene.scale.height / 2 + 140
+      );
       this.menuBorder.strokePath();
-  
+
       // Terminal header bar
       this.headerBar = this.scene.add.rectangle(
         this.scene.scale.width / 2,
         this.scene.scale.height / 2 - 140,
-        458, 
+        458,
         30,
         0x001a1a,
         1
