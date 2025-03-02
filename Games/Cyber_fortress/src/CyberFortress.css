@@ -1,3 +1,114 @@
+.hidden-threat-indicator {
+  font-size: 42px;
+  font-weight: bold;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.reveal-animation {
+  animation: reveal-threat 0.5s ease-in;
+}
+
+@keyframes reveal-threat {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.game-message {
+  background-color: #2d2d2d;
+  padding: 10px 15px;
+  border-radius: 8px;
+  margin: 10px 0 20px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.game-message.success {
+  background-color: rgba(0, 204, 102, 0.3);
+  color: #00cc66;
+}
+
+.start-message {
+  background-color: #00498b;
+  padding: 20px;
+  animation: pulse-start 2s infinite;
+}
+
+.prepare-message {
+  background-color: #cc6600;
+  color: white;
+  animation: pulse-prepare 1s infinite;
+}
+
+.start-button {
+  background-color: #00cc66;
+  color: white;
+  border: none;
+  padding: 15px 40px;
+  border-radius: 8px;
+  font-size: 20px;
+  font-weight: bold;
+  margin-top: 15px;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 0 15px rgba(0, 204, 102, 0.5);
+  letter-spacing: 2px;
+}
+
+.start-button:hover {
+  background-color: #00dd77;
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(0, 204, 102, 0.7);
+}
+
+@keyframes pulse-start {
+  0%,
+  100% {
+    background-color: #00498b;
+  }
+  50% {
+    background-color: #0066cc;
+  }
+}
+
+@keyframes pulse-prepare {
+  0%,
+  100% {
+    background-color: #cc6600;
+  }
+  50% {
+    background-color: #ff8800;
+  }
+}
+
+.reveal-message {
+  background-color: #ff9900;
+  color: #000;
+  animation: pulse-warning 1.5s infinite;
+  font-size: 18px;
+}
+
+@keyframes pulse-warning {
+  0%,
+  100% {
+    background-color: #ff9900;
+  }
+  50% {
+    background-color: #ff6600;
+  }
+}
+
+.showing-threat {
+  box-shadow: 0 0 15px rgba(255, 187, 0, 0.9);
+  transform: scale(1.03);
+  transition: all 0.3s ease;
+  z-index: 10;
+}
 .game-container {
   max-width: 800px;
   margin: 0 auto;
@@ -5,11 +116,20 @@
   background-color: #1a1a1a;
   border-radius: 10px;
   color: white;
+  position: relative;
+  z-index: 1;
 }
 
 .game-header {
   text-align: center;
   margin-bottom: 20px;
+}
+
+.game-header h1 {
+  color: #00aaff;
+  text-shadow: 0 0 10px rgba(0, 170, 255, 0.5);
+  font-size: 36px;
+  margin-bottom: 15px;
 }
 
 .status-bar {
@@ -19,16 +139,25 @@
   padding: 15px;
   border-radius: 8px;
   margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.status-bar > div {
+  margin: 5px 10px;
+  font-weight: bold;
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
   background-color: #2d2d2d;
-  padding: 15px;
+  padding: 20px;
   border-radius: 8px;
   margin-bottom: 20px;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .grid-cell {
@@ -42,10 +171,45 @@
   cursor: pointer;
   position: relative;
   transition: background-color 0.3s;
+  height: 120px;
 }
 
 .grid-cell:hover {
   background-color: #4d4d4d;
+}
+
+.threat-indicator {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  background-color: rgba(0, 0, 0, 0.7);
+  border-radius: 8px;
+  padding: 10px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.defense-indicator {
+  font-size: 32px;
+  z-index: 4;
+}
+
+.threat-icon {
+  font-size: 42px;
+  margin-bottom: 8px;
+  filter: drop-shadow(0 0 5px rgba(255, 255, 0, 0.7));
+}
+
+.threat-name {
+  font-size: 16px;
+  text-align: center;
+  color: white;
+  font-weight: bold;
+  text-shadow: 0 0 5px rgba(255, 255, 0, 0.7);
 }
 
 .defense-buttons {
@@ -53,6 +217,9 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
   margin-bottom: 20px;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .defense-button {
@@ -68,17 +235,23 @@
   transition: background-color 0.3s;
 }
 
+.defense-icon {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.defense-name {
+  font-size: 12px;
+  text-align: center;
+}
+
 .defense-button:hover {
   background-color: #4d4d4d;
 }
 
 .defense-button.selected {
   background-color: #0066cc;
-}
-
-.defense-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  box-shadow: 0 0 10px rgba(0, 102, 204, 0.7);
 }
 
 .warning-indicator {
@@ -88,6 +261,27 @@
   border-radius: 8px;
   animation: pulse 2s infinite;
   pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  z-index: 6;
+}
+
+.warning-indicator.success {
+  border-color: #00cc66;
+  background-color: rgba(0, 204, 102, 0.4);
+  animation: success-flash 1s ease-out;
+  color: #00cc66;
+  text-shadow: 0 0 10px rgba(0, 204, 102, 0.7);
+}
+
+.warning-indicator.failure {
+  border-color: #ff3333;
+  background-color: rgba(255, 51, 51, 0.4);
+  animation: failure-flash 1s ease-out;
+  color: #ff3333;
+  text-shadow: 0 0 10px rgba(255, 51, 51, 0.7);
 }
 
 .attack-animation {
@@ -106,14 +300,40 @@
   border-radius: 8px;
 }
 
+.legend h2 {
+  color: #00aaff;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
 .legend-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
   gap: 10px;
+  padding: 10px;
+  background-color: #3d3d3d;
+  border-radius: 8px;
+}
+
+.threat-icon {
+  font-size: 24px;
+}
+
+.counter-info {
+  font-size: 12px;
+  color: #00cc66;
+  margin-top: 5px;
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -132,19 +352,78 @@
   }
 }
 
+@keyframes success-flash {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.2);
+    opacity: 0;
+  }
+}
+
+@keyframes failure-flash {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
 /* Defense colors */
-.firewall { background-color: #0066cc; }
-.password { background-color: #00cc66; }
-.encryption { background-color: #9933cc; }
+.firewall {
+  background-color: #0066cc;
+}
+.password {
+  background-color: #00cc66;
+}
+.encryption {
+  background-color: #9933cc;
+}
+.antivirus {
+  background-color: #339933;
+}
+.training {
+  background-color: #cc9900;
+}
+.loadBalancer {
+  background-color: #0099cc;
+}
+.backup {
+  background-color: #ff6600;
+}
+.scanner {
+  background-color: #00aaaa;
+}
+.sandbox {
+  background-color: #cc6600;
+}
 
 /* Status colors */
-.credits { color: #0099ff; }
-.score { color: #00cc66; }
-.level { color: #ffbb00; }
+.score {
+  color: #00cc66;
+}
+.level {
+  color: #ffbb00;
+}
+.threats-resolved {
+  color: #ff9900;
+}
+.high-score {
+  color: #00aaff;
+}
 
 /* Cool background animation */
 .cyber-background {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
@@ -158,8 +437,7 @@
   position: absolute;
   width: 200%;
   height: 200%;
-  background-image: 
-    linear-gradient(rgba(0, 100, 255, 0.1) 1px, transparent 1px),
+  background-image: linear-gradient(rgba(0, 100, 255, 0.1) 1px, transparent 1px),
     linear-gradient(90deg, rgba(0, 100, 255, 0.1) 1px, transparent 1px);
   background-size: 40px 40px;
   transform: perspective(500px) rotateX(60deg);
@@ -202,8 +480,12 @@
 
 .game-over-title {
   font-size: 32px;
-  color: #ff3333;
   margin-bottom: 20px;
+  text-shadow: 0 0 10px rgba(0, 170, 255, 0.5);
+}
+
+.game-over-title:not(.game-win) {
+  color: #ff3333;
 }
 
 .game-over-stats {
@@ -224,4 +506,29 @@
 
 .restart-button:hover {
   background-color: #0052a3;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .legend-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .defense-buttons {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .legend-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .defense-buttons {
+    grid-template-columns: 1fr;
+  }
+
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }

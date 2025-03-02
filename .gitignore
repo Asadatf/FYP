@@ -130,6 +130,7 @@ dist
 .pnp.*
 
 .DS_STORE
+.vscode
 
 # Games Backend
 Games/Network_Defender/ND_backend/
