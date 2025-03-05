@@ -50,6 +50,13 @@ class GameScene extends Phaser.Scene {
     // Creating Network Devices
     this.obstacles = this.physics.add.staticGroup();
 
+    // Create router in the middle position
+    const routerX = (dX + rX) / 2;
+    const routerY = (dY + rY) / 2 - 100;
+    this.router = new NetworkDevice(this, routerX, routerY, "router");
+    this.addGlowEffect(this.router);
+    this.obstacles.add(this.router);
+
     this.leftSwitch = new NetworkDevice(this, dX, dY, "switch");
     this.obstacles.add(this.leftSwitch);
 
@@ -125,6 +132,12 @@ class GameScene extends Phaser.Scene {
 
     // Listen for timeUp event
     this.events.on("timeUp", this.handleTimeUp, this);
+
+    // Initialize network tutorial and help components
+    this.initializeNetworkComponents();
+
+    // Initialize Encryption Guide
+    this.initializeEncryptionGuide();
   }
 
   createEnhancedBackground() {
@@ -133,32 +146,32 @@ class GameScene extends Phaser.Scene {
     this.background.setOrigin(0, 0);
     this.background.displayWidth = this.scale.width;
     this.background.displayHeight = this.scale.height;
-    
+
     // Add a grid overlay to enhance the cybersecurity feel
     this.createCyberGrid();
-    
+
     // Add animated circuit elements
     this.createCircuitElements();
   }
-  
+
   createCyberGrid() {
     // Create a grid overlay
     const grid = this.add.graphics();
-    grid.lineStyle(1, 0x00ffff, 0.15);  // Cyan lines, subtle opacity
-    
+    grid.lineStyle(1, 0x00ffff, 0.15); // Cyan lines, subtle opacity
+
     // Draw horizontal lines
     const gridSize = 40;
     for (let y = 0; y < this.scale.height; y += gridSize) {
       grid.moveTo(0, y);
       grid.lineTo(this.scale.width, y);
     }
-    
+
     // Draw vertical lines
     for (let x = 0; x < this.scale.width; x += gridSize) {
       grid.moveTo(x, 0);
       grid.lineTo(x, this.scale.height);
     }
-    
+
     // Animate grid subtly
     this.tweens.add({
       targets: grid,
@@ -166,104 +179,119 @@ class GameScene extends Phaser.Scene {
       duration: 3000,
       yoyo: true,
       repeat: -1,
-      ease: 'Sine.easeInOut'
+      ease: "Sine.easeInOut",
     });
   }
-  
+
   createCircuitElements() {
     // Create circuit trace graphics
     const circuits = this.add.graphics();
     circuits.lineStyle(2, 0x00ffaa, 0.3);
-    
+
     // Draw some horizontal circuit traces
     for (let i = 0; i < 5; i++) {
       const y = Math.random() * this.scale.height;
       circuits.beginPath();
       circuits.moveTo(0, y);
-      
+
       // Create a zig-zag pattern
       for (let x = 100; x < this.scale.width; x += 100) {
         const offset = Math.random() > 0.5 ? 30 : -30;
         circuits.lineTo(x, y + offset);
       }
-      
+
       circuits.strokePath();
     }
-    
+
     // Draw some vertical circuit traces
     for (let i = 0; i < 5; i++) {
       const x = Math.random() * this.scale.width;
       circuits.beginPath();
       circuits.moveTo(x, 0);
-      
+
       // Create a zig-zag pattern
       for (let y = 100; y < this.scale.height; y += 100) {
         const offset = Math.random() > 0.5 ? 30 : -30;
         circuits.lineTo(x + offset, y);
       }
-      
+
       circuits.strokePath();
     }
-    
+
     // Create animated circuit pulses
     this.time.addEvent({
       delay: 2000,
       callback: this.createCircuitPulse,
       callbackScope: this,
-      loop: true
+      loop: true,
     });
   }
-  
+
   createCircuitPulse() {
     // Choose a random circuit path and send a pulse down it
     const isHorizontal = Math.random() > 0.5;
-    const position = Math.random() * (isHorizontal ? this.scale.height : this.scale.width);
-    
-    const pulse = this.add.circle(
-      isHorizontal ? 0 : position,
-      isHorizontal ? position : 0,
-      3,
-      0x00ffaa,
-      1
-    ).setAlpha(0.8);
-    
+    const position =
+      Math.random() * (isHorizontal ? this.scale.height : this.scale.width);
+
+    const pulse = this.add
+      .circle(
+        isHorizontal ? 0 : position,
+        isHorizontal ? position : 0,
+        3,
+        0x00ffaa,
+        1
+      )
+      .setAlpha(0.8);
+
     this.tweens.add({
       targets: pulse,
       x: isHorizontal ? this.scale.width : pulse.x,
       y: isHorizontal ? pulse.y : this.scale.height,
       duration: 2000,
-      ease: 'Linear',
-      onComplete: () => pulse.destroy()
+      ease: "Linear",
+      onComplete: () => pulse.destroy(),
     });
   }
-  
+
   createDataNodes() {
     // Create interactive data nodes that pulse
     for (let i = 0; i < 8; i++) {
       // Position nodes around the game area but away from critical gameplay elements
       let x, y;
       let validPosition = false;
-      
+
       // Make sure nodes don't overlap with important game elements
       while (!validPosition) {
         x = Phaser.Math.Between(50, this.scale.width - 50);
         y = Phaser.Math.Between(50, this.scale.height - 50);
-        
+
         // Check distance from defender, receiver, and switches
         const minDistanceFromElements = 150;
         if (
-          Phaser.Math.Distance.Between(x, y, this.defender.x, this.defender.y) > minDistanceFromElements &&
-          Phaser.Math.Distance.Between(x, y, this.receiver.x, this.receiver.y) > minDistanceFromElements &&
-          Phaser.Math.Distance.Between(x, y, this.leftSwitch.x, this.leftSwitch.y) > minDistanceFromElements &&
-          Phaser.Math.Distance.Between(x, y, this.rightSwitch.x, this.rightSwitch.y) > minDistanceFromElements
+          Phaser.Math.Distance.Between(x, y, this.defender.x, this.defender.y) >
+            minDistanceFromElements &&
+          Phaser.Math.Distance.Between(x, y, this.receiver.x, this.receiver.y) >
+            minDistanceFromElements &&
+          Phaser.Math.Distance.Between(
+            x,
+            y,
+            this.leftSwitch.x,
+            this.leftSwitch.y
+          ) > minDistanceFromElements &&
+          Phaser.Math.Distance.Between(
+            x,
+            y,
+            this.rightSwitch.x,
+            this.rightSwitch.y
+          ) > minDistanceFromElements
         ) {
           validPosition = true;
         }
       }
-      
+
       // Create the node
       const node = this.add.circle(x, y, 6, 0x00ff88, 1);
-      
+
       // Add pulsing animation
       this.tweens.add({
         targets: node,
@@ -272,9 +300,9 @@ class GameScene extends Phaser.Scene {
         duration: 1200 + Math.random() * 800,
         yoyo: true,
         repeat: -1,
-        ease: 'Sine.easeInOut'
+        ease: "Sine.easeInOut",
       });
-      
+
       // Add a glow effect
       const glow = this.add.circle(x, y, 12, 0x00ff88, 0.3);
       this.tweens.add({
@@ -283,7 +311,7 @@ class GameScene extends Phaser.Scene {
         alpha: { from: 0.3, to: 0 },
         duration: 1500,
         repeat: -1,
-        ease: 'Sine.easeOut'
+        ease: "Sine.easeOut",
       });
     }
   }
@@ -428,7 +456,7 @@ class GameScene extends Phaser.Scene {
       loop: true,
     });
   }
-  
+
   createPacketTrail() {
     if (this.packet && this.packet.visible) {
       const trail = this.add.circle(
@@ -452,7 +480,7 @@ class GameScene extends Phaser.Scene {
       });
     }
   }
-  
+
   addGlowEffect(gameObject) {
     const glowGraphics = this.add.graphics();
     const glowColor = 0x00ff00;
@@ -474,7 +502,7 @@ class GameScene extends Phaser.Scene {
       },
     });
   }
-  
+
   createNetworkConnections() {
     this.connectionGraphics = this.add.graphics();
 
@@ -487,27 +515,42 @@ class GameScene extends Phaser.Scene {
   }
 
   updateNetworkConnections() {
-    // Only draw connection if path is valid (both IPs configured)
+    // Only draw connection if path is valid (devices configured)
     if (this.pathManager && this.pathManager.isPathValid()) {
       this.connectionGraphics.clear();
       this.connectionGraphics.lineStyle(2, 0x00ff00, 0.5);
 
       const progress = (Date.now() % 2000) / 2000;
 
-      this.drawAnimatedConnection(
-        this.connectionGraphics,
-        this.leftSwitch.x,
-        this.leftSwitch.y,
-        this.rightSwitch.x,
-        this.rightSwitch.y,
-        progress
-      );
+      // Draw connection from left switch to router
+      if (this.leftSwitch && this.router) {
+        this.drawAnimatedConnection(
+          this.connectionGraphics,
+          this.leftSwitch.x,
+          this.leftSwitch.y,
+          this.router.x,
+          this.router.y,
+          progress
+        );
+      }
+
+      // Draw connection from router to right switch
+      if (this.router && this.rightSwitch) {
+        this.drawAnimatedConnection(
+          this.connectionGraphics,
+          this.router.x,
+          this.router.y,
+          this.rightSwitch.x,
+          this.rightSwitch.y,
+          (progress + 0.33) % 1 // Offset for visual variety
+        );
+      }
     } else {
       // Clear any existing connection if path becomes invalid
       this.connectionGraphics.clear();
     }
   }
-  
+
   drawAnimatedConnection(graphics, x1, y1, x2, y2, progress) {
     // Draw base line
     graphics.beginPath();
@@ -527,71 +570,315 @@ class GameScene extends Phaser.Scene {
     }
   }
 
-  // Updated update method for GameScene.js that fixes the interaction issue
-// Add this to your GameScene.js file
+  // Add this to your GameScene.js file's create() method after initializing other components
 
-update() {
-  this.defender.update(this.keys, this.MessageHandler.menuActive);
+  initializeNetworkComponents() {
+    // Create and initialize network tutorial overlay
+    this.networkTutorial = new NetworkTutorialOverlay(this);
 
-  this.nearObstacle = false;
-  let nearestObstacle = null;
-  let minDistance = Infinity;
+    // Create help button for network configuration
+    const helpButton = this.add
+      .text(this.scale.width - 70, 100, "?", {
+        fontSize: "32px",
+        fontStyle: "bold",
+        backgroundColor: "#004466",
+        padding: { x: 12, y: 8 },
+        borderRadius: 15,
+        fill: "#00ffff",
+      })
+      .setOrigin(0.5)
+      .setInteractive()
+      .setDepth(101);
 
-  // Find the nearest obstacle and check if player is near any obstacle
-  this.obstacles.children.iterate((obstacle) => {
-    const distance = Phaser.Math.Distance.Between(
-      this.defender.x,
-      this.defender.y,
-      obstacle.x,
-      obstacle.y
-    );
-    
-    if (distance < 100) {
-      this.nearObstacle = true;
-      
-      // Track the nearest obstacle
-      if (distance < minDistance) {
-        minDistance = distance;
-        nearestObstacle = obstacle;
+    // Add hover effects
+    helpButton.on("pointerover", () => {
+      helpButton.setScale(1.1);
+      helpButton.setBackgroundColor("#006699");
+    });
+
+    helpButton.on("pointerout", () => {
+      helpButton.setScale(1);
+      helpButton.setBackgroundColor("#004466");
+    });
+
+    // Show network tutorial when clicked
+    helpButton.on("pointerdown", () => {
+      this.networkTutorial.showTutorial();
+    });
+
+    // Add help text
+    const helpText = this.add
+      .text(this.scale.width - 70, 130, "Network Guide", {
+        fontSize: "12px",
+        fill: "#ffffff",
+      })
+      .setOrigin(0.5)
+      .setDepth(101);
+
+    // Show tutorial on first load
+    this.time.delayedCall(1000, () => {
+      // Only show tutorial automatically if no devices are configured yet
+      if (
+        this.pathManager &&
+        !this.pathManager.isPathValid() &&
+        this.pathManager.currentPath.length === 0
+      ) {
+        this.networkTutorial.showTutorial();
+      }
+    });
+  }
+
+  // Add to GameScene's update method
+
+  handleNetworkStatus() {
+    // Check if all network devices are configured
+    if (this.pathManager && this.pathManager.isPathValid()) {
+      // Show success message if this is the first time path is valid
+      if (!this.networkConfigured) {
+        this.networkConfigured = true;
+
+        // Create celebratory message
+        const networkReadyText = this.add
+          .text(this.scale.width / 2, 100, "NETWORK CONFIGURED SUCCESSFULLY!", {
+            fontSize: "28px",
+            fontStyle: "bold",
+            fill: "#00ff00",
+            backgroundColor: "#003300",
+            padding: 10,
+            stroke: "#000000",
+            strokeThickness: 2,
+          })
+          .setOrigin(0.5)
+          .setDepth(100);
+
+        // Add particles for visual celebration
+        const particles = this.add.particles(
+          this.scale.width / 2,
+          120,
+          "packet",
+          {
+            speed: { min: 100, max: 200 },
+            scale: { start: 0.1, end: 0 },
+            blendMode: "ADD",
+            lifespan: 1000,
+            quantity: 20,
+          }
+        );
+
+        // Animate and remove after a few seconds
+        this.tweens.add({
+          targets: networkReadyText,
+          y: 120,
+          alpha: { from: 1, to: 0 },
+          duration: 3000,
+          delay: 2000,
+          ease: "Power2",
+          onComplete: () => {
+            networkReadyText.destroy();
+            particles.destroy();
+
+            // Show encryption guide hint after network is configured
+            this.showEncryptionGuideHint();
+          },
+        });
       }
     }
-  });
+  }
 
-  // Show interaction prompt when near an obstacle and when valid path exists
-  // Important: We no longer check if the object is part of the path - we allow interaction with configured devices
-  if (
-    this.nearObstacle &&
-    !this.MessageHandler.menuActive &&
-    this.pathManager.isPathValid()
-  ) {
-    // Position the prompt near the player and obstacle
-    this.interactText.setPosition(
-      nearestObstacle ? nearestObstacle.x : this.defender.x,
-      (nearestObstacle ? nearestObstacle.y : this.defender.y) - 50
+  initializeEncryptionGuide() {
+    // Create and initialize encryption guide overlay
+    this.encryptionGuide = new EncryptionGuideOverlay(this);
+
+    // Create help button for encryption guide
+    const encryptHelpButton = this.add
+      .text(this.scale.width - 70, 160, "?", {
+        fontSize: "32px",
+        fontStyle: "bold",
+        backgroundColor: "#440066",
+        padding: { x: 12, y: 8 },
+        borderRadius: 15,
+        fill: "#ff00ff",
+      })
+      .setOrigin(0.5)
+      .setInteractive()
+      .setDepth(101);
+
+    // Add hover effects
+    encryptHelpButton.on("pointerover", () => {
+      encryptHelpButton.setScale(1.1);
+      encryptHelpButton.setBackgroundColor("#660099");
+    });
+
+    encryptHelpButton.on("pointerout", () => {
+      encryptHelpButton.setScale(1);
+      encryptHelpButton.setBackgroundColor("#440066");
+    });
+
+    // Show encryption guide when clicked
+    encryptHelpButton.on("pointerdown", () => {
+      this.encryptionGuide.showTutorial();
+    });
+
+    // Add help text
+    const encryptHelpText = this.add
+      .text(this.scale.width - 70, 190, "Encryption Guide", {
+        fontSize: "12px",
+        fill: "#ffffff",
+      })
+      .setOrigin(0.5)
+      .setDepth(101);
+
+    // Store references
+    this.encryptHelpButton = encryptHelpButton;
+    this.encryptHelpText = encryptHelpText;
+  }
+
+  // Add this method to show a hint about the encryption guide
+  showEncryptionGuideHint() {
+    // Only show once
+    if (this.encryptionHintShown) return;
+    this.encryptionHintShown = true;
+
+    // Create hint message
+    const hintText = this.add
+      .text(
+        this.scale.width / 2,
+        150,
+        "Ready to send encrypted messages! Check the Encryption Guide for help.",
+        {
+          fontSize: "16px",
+          fill: "#ff00ff",
+          backgroundColor: "#330033",
+          padding: { x: 10, y: 5 },
+        }
+      )
+      .setOrigin(0.5)
+      .setDepth(100);
+
+    // Add an arrow pointing to the encryption guide button
+    const arrow = this.add.graphics().setDepth(100);
+    arrow.lineStyle(3, 0xff00ff, 1);
+    arrow.lineBetween(
+      this.scale.width / 2 + 200,
+      150,
+      this.scale.width - 100,
+      180
     );
-    
-    // Check if the switch is already configured (in the path)
-    const isConfigured = nearestObstacle && 
-                         this.pathManager.currentPath.includes(nearestObstacle);
-    
-    // Change prompt text based on whether the device is configured or not
-    if (isConfigured) {
-      this.interactText.setText("Press E to Send Message")
-                      .setFill("#00ffaa");
-    } else {
-      this.interactText.setText("Press E to Interact")
-                      .setFill("#00ff00");
-    }
-    
-    this.interactText.setVisible(true);
-  } else {
-    this.interactText.setVisible(false);
-  }
 
-  // Show the context-specific menu when E is pressed near an obstacle
-  if (this.keys.e.isDown && this.nearObstacle) {
-    this.nearObstacle = false;
-    this.MessageHandler.openMessagePopup();
+    // Add arrowhead
+    arrow.fillStyle(0xff00ff, 1);
+    arrow.fillTriangle(
+      this.scale.width - 100,
+      180,
+      this.scale.width - 110,
+      170,
+      this.scale.width - 90,
+      170
+    );
+
+    // Animate and fade out
+    this.tweens.add({
+      targets: [hintText, arrow],
+      alpha: { from: 1, to: 0 },
+      duration: 4000,
+      delay: 3000,
+      ease: "Power2",
+      onComplete: () => {
+        hintText.destroy();
+        arrow.destroy();
+      },
+    });
+
+    // Flash the encryption help button to draw attention
+    this.tweens.add({
+      targets: this.encryptHelpButton,
+      scale: { from: 1, to: 1.2 },
+      duration: 500,
+      yoyo: true,
+      repeat: 5,
+      ease: "Sine.easeInOut",
+    });
   }
-}
+  // Updated update method for GameScene.js that fixes the interaction issue
+  // Add this to your GameScene.js file
+
+  update() {
+    this.defender.update(this.keys, this.MessageHandler.menuActive);
+
+    this.nearObstacle = false;
+    let nearestObstacle = null;
+    let minDistance = Infinity;
+
+    // Find the nearest obstacle and check if player is near any obstacle
+    this.obstacles.children.iterate((obstacle) => {
+      const distance = Phaser.Math.Distance.Between(
+        this.defender.x,
+        this.defender.y,
+        obstacle.x,
+        obstacle.y
+      );
+
+      if (distance < 100) {
+        this.nearObstacle = true;
+
+        // Track the nearest obstacle
+        if (distance < minDistance) {
+          minDistance = distance;
+          nearestObstacle = obstacle;
+        }
+      }
+    });
+
+    // Show interaction prompt when near an obstacle
+    if (this.nearObstacle && !this.MessageHandler.menuActive) {
+      // Position the prompt near the player and obstacle
+      this.interactText.setPosition(
+        nearestObstacle ? nearestObstacle.x : this.defender.x,
+        (nearestObstacle ? nearestObstacle.y : this.defender.y) - 50
+      );
+
+      // Check if the device is already configured
+      const isConfigured =
+        nearestObstacle &&
+        this.pathManager.currentPath.includes(nearestObstacle);
+
+      // Check if we have a valid path (all required devices configured)
+      const hasValidPath = this.pathManager.isPathValid();
+
+      // Change prompt text based on device status
+      if (isConfigured && hasValidPath) {
+        this.interactText.setText("Press E to Send Message").setFill("#00ffaa");
+      } else if (isConfigured) {
+        this.interactText
+          .setText("Configure other devices!")
+          .setFill("#ffaa00");
+      } else {
+        this.interactText.setText("Press E to Configure").setFill("#00ff00");
+      }
+
+      this.interactText.setVisible(true);
+    } else {
+      this.interactText.setVisible(false);
+    }
+
+    // Show the context-specific menu when E is pressed near an obstacle
+    if (
+      Phaser.Input.Keyboard.JustDown(this.keys.e) &&
+      this.nearObstacle &&
+      nearestObstacle
+    ) {
+      if (
+        this.pathManager.isPathValid() &&
+        this.pathManager.currentPath.includes(nearestObstacle)
+      ) {
+        // If path is valid and this device is configured, open message popup
+        this.MessageHandler.openMessagePopup();
+      } else {
+        // Otherwise, open the IP configuration popup
+        this.pathManager.openIPPopup(nearestObstacle);
+      }
+    }
+
+    this.handleNetworkStatus();
+  }
 }

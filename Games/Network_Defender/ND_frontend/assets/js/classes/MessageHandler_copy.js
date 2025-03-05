@@ -59,6 +59,9 @@ class MessageHandler {
     this.wordSelectionTimer = null;
     this.wordSelectionText = null;
     this.isSelectingWords = false;
+
+    // Initialize the Man-in-the-Middle attack handler
+    this.mitmAttack = new ManInTheMiddleAttack(scene, this);
   }
 
   // RSA
@@ -1051,6 +1054,7 @@ class MessageHandler {
     }
   }
 
+  // 2. Modify the showEncryptionMethodSelection method to check for attacks:
   showEncryptionMethodSelection() {
     // Close any existing popups first
     this.closePopup();
@@ -1060,6 +1064,25 @@ class MessageHandler {
       wordText.setVisible(false);
     });
 
+    // Check if a MITM attack should occur
+    if (this.mitmAttack.checkForAttack()) {
+      // Trigger the attack before showing encryption methods
+      this.mitmAttack.triggerAttack((messageCorrupted) => {
+        if (messageCorrupted) {
+          // If message is corrupted, store that info for later
+          this.messageCorrupted = true;
+        }
+        // Continue with showing encryption methods after attack is handled
+        this.createEncryptionMethodUI();
+      });
+    } else {
+      // No attack, proceed normally
+      this.createEncryptionMethodUI();
+    }
+  }
+
+  // 3. Add this new method:
+  createEncryptionMethodUI() {
     // Create method selection popup
     this.menuBackground = this.scene.add.rectangle(
       this.scene.scale.width / 2,
@@ -1473,6 +1496,15 @@ class MessageHandler {
   }
 
   launchEncryptedPacket() {
+    // Check if message is corrupted from MITM attack
+    if (this.messageCorrupted) {
+      // Corrupt the message
+      this.encryptedMessage = this.mitmAttack.corruptMessage(
+        this.encryptedMessage
+      );
+      this.messageCorrupted = false; // Reset the flag
+    }
+
     // Stopping Timer when packet is launched
     if (this.scene.timeManager && this.scene.timeManager.isActive) {
       // Get remaining time for potential bonus
@@ -1542,9 +1574,6 @@ class MessageHandler {
           this.lastMessage,
           this.encryptedMessage
         );
-
-        // Add this line to perform encryption analysis
-        // this.fallbackLocalScoring(this.lastMessage, this.encryptedMessage);
       },
     });
   }
