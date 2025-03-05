@@ -6,6 +6,7 @@ class NetworkTutorialOverlay {
     this.slideElements = []; // Track all created elements for proper cleanup
     this.currentSlide = 0;
     this.isActive = false;
+    this.escKeyListener = null; // Track ESC key listener for cleanup
   }
 
   showTutorial() {
@@ -15,6 +16,23 @@ class NetworkTutorialOverlay {
     this.createTutorialContainer();
     this.createTutorialContent();
     this.showCurrentSlide();
+
+    // Setup ESC key listener
+    this.setupEscapeKeyListener();
+  }
+
+  setupEscapeKeyListener() {
+    // Create a listener for the ESC key to exit the tutorial immediately
+    this.escKeyListener = this.scene.input.keyboard.addKey("ESC");
+    this.escKeyListener.on("down", () => {
+      // Close the tutorial immediately
+      this.closeTutorial();
+    });
+  }
+
+  hideTutorial() {
+    // This method is deprecated - use closeTutorial instead
+    this.closeTutorial();
   }
 
   createTutorialContainer() {
@@ -118,6 +136,15 @@ class NetworkTutorialOverlay {
       })
       .setOrigin(0.5);
     this.slideElements.push(contentText);
+
+    // Add ESC key hint at the top-left corner
+    const escHint = this.scene.add
+      .text(-290, -190, "Press ESC to exit", {
+        fontSize: "14px",
+        fill: "#aaaaaa",
+      })
+      .setOrigin(0, 0);
+    this.slideElements.push(escHint);
 
     // Create navigation buttons
     const prevButton = this.createButton(-250, 170, "Previous", () =>
@@ -267,6 +294,13 @@ class NetworkTutorialOverlay {
 
   closeTutorial() {
     if (!this.isActive) return;
+
+    // Remove the ESC key listener
+    if (this.escKeyListener) {
+      this.escKeyListener.off("down");
+      this.scene.input.keyboard.removeKey("ESC");
+      this.escKeyListener = null;
+    }
 
     // Fade out animation
     this.scene.tweens.add({

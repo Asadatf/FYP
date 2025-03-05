@@ -1348,56 +1348,240 @@ class MessageHandler {
   }
 
   displayReceiverEncryptedMessage() {
+    // Use the encrypted message from the class property
+    const encryptedMessage = this.encryptedMessage;
+
     // Verify we have an encrypted message to display
-    if (!this.encryptedMessage) {
+    if (!encryptedMessage) {
       console.warn("No encrypted message to display");
       return;
     }
 
-    // Display speech bubble with encrypted message at receiver's switch
-    const speechBubble = this.scene.add.image(
-      this.receiverX,
-      this.receiverY - 50,
-      "Popup"
+    // Create a cyberpunk-themed container for our custom speech bubble
+    const bubbleContainer = this.scene.add
+      .container(this.receiverX, this.receiverY - 80)
+      .setDepth(10);
+
+    // Create a custom speech bubble background with hexagonal/terminal style
+    const bubbleBg = this.scene.add.graphics();
+    const bubbleWidth = 350; // Slightly wider for encrypted message
+    const bubbleHeight = 180;
+    const cornerSize = 15;
+
+    // Fill with translucent dark background (red tint for encrypted)
+    bubbleBg.fillStyle(0x140a0a, 0.85);
+    bubbleBg.fillRoundedRect(
+      -bubbleWidth / 2,
+      -bubbleHeight / 2,
+      bubbleWidth,
+      bubbleHeight,
+      5
     );
-    speechBubble.setOrigin(0.5);
-    speechBubble.setScale(1).setDepth(1);
 
-    const bubbleWidth = speechBubble.width * speechBubble.scaleX - 20;
+    // Add tech-styled border (pink/red for encrypted)
+    bubbleBg.lineStyle(2, 0xff33aa, 0.9);
+    bubbleBg.strokeRoundedRect(
+      -bubbleWidth / 2,
+      -bubbleHeight / 2,
+      bubbleWidth,
+      bubbleHeight,
+      5
+    );
 
-    // Add encrypted message text inside the bubble
-    const bubbleText = this.scene.add
-      .text(this.receiverX, this.receiverY, this.encryptedMessage, {
-        fontSize: "18px",
-        fill: "#000000",
-        wordWrap: { width: bubbleWidth, useAdvancedWrap: true },
+    // Add corner accents for cyberpunk style (pink/red)
+    // Top-left corner
+    bubbleBg.lineStyle(3, 0xff33aa, 1);
+    bubbleBg.beginPath();
+    bubbleBg.moveTo(-bubbleWidth / 2, -bubbleHeight / 2 + cornerSize);
+    bubbleBg.lineTo(-bubbleWidth / 2, -bubbleHeight / 2);
+    bubbleBg.lineTo(-bubbleWidth / 2 + cornerSize, -bubbleHeight / 2);
+    bubbleBg.strokePath();
+
+    // Top-right corner
+    bubbleBg.beginPath();
+    bubbleBg.moveTo(bubbleWidth / 2 - cornerSize, -bubbleHeight / 2);
+    bubbleBg.lineTo(bubbleWidth / 2, -bubbleHeight / 2);
+    bubbleBg.lineTo(bubbleWidth / 2, -bubbleHeight / 2 + cornerSize);
+    bubbleBg.strokePath();
+
+    // Bottom-left corner
+    bubbleBg.beginPath();
+    bubbleBg.moveTo(-bubbleWidth / 2, bubbleHeight / 2 - cornerSize);
+    bubbleBg.lineTo(-bubbleWidth / 2, bubbleHeight / 2);
+    bubbleBg.lineTo(-bubbleWidth / 2 + cornerSize, bubbleHeight / 2);
+    bubbleBg.strokePath();
+
+    // Bottom-right corner
+    bubbleBg.beginPath();
+    bubbleBg.moveTo(bubbleWidth / 2 - cornerSize, bubbleHeight / 2);
+    bubbleBg.lineTo(bubbleWidth / 2, bubbleHeight / 2);
+    bubbleBg.lineTo(bubbleWidth / 2, bubbleHeight / 2 - cornerSize);
+    bubbleBg.strokePath();
+
+    // Add a terminal-style header bar (darker for encrypted)
+    const headerBg = this.scene.add
+      .rectangle(0, -bubbleHeight / 2 + 15, bubbleWidth - 4, 30, 0x1a0a0a, 1)
+      .setStrokeStyle(1, 0xff33aa);
+
+    // Add message source indicator
+    const headerText = this.scene.add
+      .text(0, -bubbleHeight / 2 + 15, "RECEIVER: RX [ENCRYPTED]", {
+        fontSize: "14px",
+        fontFamily: "Courier New",
+        fill: "#ff33aa",
+        align: "center",
       })
-      .setOrigin(0.5)
-      .setDepth(2)
-      .setAlpha(0);
+      .setOrigin(0.5);
 
-    Phaser.Display.Align.In.Center(bubbleText, speechBubble);
+    // Add a connection strength indicator (encrypted)
+    const encryptionIndicator = this.scene.add.container(
+      bubbleWidth / 2 - 40,
+      -bubbleHeight / 2 + 15
+    );
 
-    speechBubble.setAlpha(0);
+    // Create a flashing encryption indicator
+    const encryptText = this.scene.add
+      .text(0, 0, "ENCRYPTED", {
+        fontSize: "11px",
+        fontFamily: "Courier New",
+        fill: "#ff0066",
+        align: "right",
+      })
+      .setOrigin(0.5);
 
-    // Add fade-in animation for the encrypted message
+    encryptionIndicator.add(encryptText);
+
+    // Add a flashing animation to the encryption indicator
     this.scene.tweens.add({
-      targets: [speechBubble, bubbleText],
-      alpha: 1,
+      targets: encryptText,
+      alpha: 0.5,
       duration: 500,
-      ease: "Power2",
+      yoyo: true,
+      repeat: -1,
+    });
+
+    // Add a triangle pointer at the bottom of the bubble
+    const pointer = this.scene.add.graphics();
+    pointer.fillStyle(0x140a0a, 0.85);
+    pointer.lineStyle(2, 0xff33aa, 0.9);
+    pointer.beginPath();
+    pointer.moveTo(-15, bubbleHeight / 2);
+    pointer.lineTo(0, bubbleHeight / 2 + 20);
+    pointer.lineTo(15, bubbleHeight / 2);
+    pointer.closePath();
+    pointer.fillPath();
+    pointer.strokePath();
+
+    // Add encryption status line
+    const statusLine = this.scene.add
+      .text(0, -10, "// ENCRYPTED TRANSMISSION //", {
+        fontSize: "12px",
+        fontFamily: "Courier New",
+        fill: "#ff5599",
+        align: "center",
+      })
+      .setOrigin(0.5);
+
+    // Add the encrypted text with better wrapping and style - use exact same message
+    const bubbleText = this.scene.add
+      .text(0, 20, encryptedMessage, {
+        fontSize: "18px",
+        fontFamily: "Courier New",
+        fill: "#ffaaff",
+        stroke: "#330022",
+        strokeThickness: 1,
+        align: "center",
+        wordWrap: { width: bubbleWidth - 40, useAdvancedWrap: true },
+        lineSpacing: 5,
+      })
+      .setOrigin(0.5);
+
+    // Add scan lines overlay effect (subtle)
+    const scanLines = this.scene.add.graphics();
+    scanLines.lineStyle(1, 0xff33aa, 0.1);
+    for (let i = -bubbleHeight / 2 + 30; i < bubbleHeight / 2; i += 4) {
+      scanLines.beginPath();
+      scanLines.moveTo(-bubbleWidth / 2 + 5, i);
+      scanLines.lineTo(bubbleWidth / 2 - 5, i);
+      scanLines.strokePath();
+    }
+
+    // Add digital noise effect for encrypted message
+    const noise = this.scene.add.graphics();
+
+    const updateNoise = () => {
+      noise.clear();
+      noise.fillStyle(0xff33aa, 0.03);
+
+      for (let i = 0; i < 15; i++) {
+        const x = Phaser.Math.Between(
+          -bubbleWidth / 2 + 10,
+          bubbleWidth / 2 - 10
+        );
+        const y = Phaser.Math.Between(
+          -bubbleHeight / 2 + 30,
+          bubbleHeight / 2 - 10
+        );
+        const size = Phaser.Math.Between(2, 6);
+
+        noise.fillRect(x, y, size, size);
+      }
+    };
+
+    // Update noise every 100ms
+    const noiseTimer = this.scene.time.addEvent({
+      delay: 100,
+      callback: updateNoise,
+      loop: true,
+    });
+
+    // Add all elements to the container
+    bubbleContainer.add([
+      bubbleBg,
+      headerBg,
+      headerText,
+      encryptionIndicator,
+      statusLine,
+      bubbleText,
+      pointer,
+      scanLines,
+      noise,
+    ]);
+
+    // Start with zero alpha
+    bubbleContainer.setAlpha(0);
+
+    // Add fade-in animation with slight bounce effect
+    this.scene.tweens.add({
+      targets: bubbleContainer,
+      alpha: 1,
+      y: this.receiverY - 70, // Slight upward animation
+      duration: 500,
+      ease: "Back.easeOut",
+    });
+
+    // Add subtle floating animation
+    this.scene.tweens.add({
+      targets: bubbleContainer,
+      y: "-=5",
+      duration: 2000,
+      yoyo: true,
+      repeat: 1,
+      ease: "Sine.easeInOut",
     });
 
     // Automatically remove the speech bubble after a delay
-    this.scene.time.delayedCall(3000, () => {
+    this.scene.time.delayedCall(6000, () => {
+      // Slightly longer for encrypted messages
       this.scene.tweens.add({
-        targets: [speechBubble, bubbleText],
+        targets: bubbleContainer,
         alpha: 0,
-        duration: 500,
+        y: "-=30",
+        duration: 700,
         ease: "Power2",
         onComplete: () => {
-          bubbleText.destroy();
-          speechBubble.destroy();
+          bubbleContainer.destroy();
+          noiseTimer.remove(); // Clean up the noise timer
         },
       });
     });
@@ -1547,33 +1731,85 @@ class MessageHandler {
       }
     }
 
-    // Reset packet to initial position
+    // Make sure packet is visible at the defender's position
     this.packet.setPosition(this.dX, this.dY);
     this.packet.setVisible(true);
 
-    // Create a tween to launch the packet
+    // Get references to receiver and its final position
+    const receiver = this.scene.receiver;
+    const receiverFinalX = this.scene.receiverFinalX || this.rX;
+    const receiverFinalY = this.scene.receiverFinalY || this.rY;
+
+    // First display the encrypted message on defender side
+    this.displaySpeechBubble(
+      this.dX,
+      this.dY - 50,
+      `Sending encrypted packet: ${this.encryptedMessage}`,
+      true
+    );
+
+    // Define the network path nodes
+    const leftSwitchX = this.scene.leftSwitch
+      ? this.scene.leftSwitch.x
+      : this.dX;
+    const leftSwitchY = this.scene.leftSwitch
+      ? this.scene.leftSwitch.y
+      : this.dY;
+    const rightSwitchX = this.scene.rightSwitch
+      ? this.scene.rightSwitch.x
+      : this.rX;
+    const rightSwitchY = this.scene.rightSwitch
+      ? this.scene.rightSwitch.y
+      : this.rY;
+
+    // Step 1: Packet moves from defender to the left switch
     this.packetTween = this.scene.tweens.add({
       targets: this.packet,
-      x: this.rX,
-      y: this.rY,
-      duration: 1500, // Adjust duration as needed
+      x: leftSwitchX,
+      y: leftSwitchY,
+      duration: 600,
       ease: "Cubic.easeInOut",
-      onStart: () => {
-        // Optional: Add packet launch sound or additional visual effects
-        this.displaySpeechBubble(
-          this.dX,
-          this.dY - 50,
-          `Sending encrypted packet: ${this.encryptedMessage}`
-        );
-      },
       onComplete: () => {
-        // Display packet arrival effect and encrypted message
-        this.displayPacketArrivalEffect();
-        this.displayReceiverEncryptedMessage();
-        this.performAdvancedEncryptionAnalysis(
-          this.lastMessage,
-          this.encryptedMessage
-        );
+        // Pause briefly at the switch to show data processing
+        this.scene.time.delayedCall(200, () => {
+          // Step 2: Packet moves from left switch to right switch
+          this.scene.tweens.add({
+            targets: this.packet,
+            x: rightSwitchX,
+            y: rightSwitchY,
+            duration: 600,
+            ease: "Cubic.easeInOut",
+            onComplete: () => {
+              // As the packet reaches the right switch, have the receiver move toward it
+              this.scene.tweens.add({
+                targets: receiver,
+                x: receiverFinalX,
+                y: receiverFinalY,
+                duration: 400,
+                ease: "Power2",
+                onComplete: () => {
+                  // Step 3: Packet completes journey to receiver
+                  this.scene.tweens.add({
+                    targets: this.packet,
+                    x: this.rX,
+                    y: this.rY,
+                    duration: 400,
+                    ease: "Power2.easeIn",
+                    onComplete: () => {
+                      // Display packet arrival effect and encrypted message
+                      this.displayPacketArrivalEffect();
+                      this.displayReceiverEncryptedMessage();
+                      this.performAdvancedEncryptionAnalysis(
+                        this.lastMessage,
+                        this.encryptedMessage
+                      );
+                    },
+                  });
+                },
+              });
+            },
+          });
+        });
       },
     });
   }
@@ -1766,24 +2002,60 @@ class MessageHandler {
   }
 
   displayPacketArrivalEffect() {
-    // Create a brief highlight at the receiver's switch
-    const arrivalHighlight = this.scene.add.rectangle(
+    // Create a more visually impressive highlight at the receiver's switch
+    const arrivalHighlight = this.scene.add.circle(
       this.rX,
       this.rY,
-      this.packet.width * 1.2,
-      this.packet.height * 1.2,
-      0x00ff00, // Green highlight
-      0.3 // Lower transparency
+      this.packet.width * 1.5, // Larger radius
+      0x00ff88, // Brighter green
+      0.6 // Higher opacity
     );
 
-    // Fade out the highlight
+    // Add a second, larger highlight for a better effect
+    const outerHighlight = this.scene.add.circle(
+      this.rX,
+      this.rY,
+      this.packet.width * 2.5,
+      0x00ff88,
+      0.2
+    );
+
+    // Add particles for more excitement
+    const particles = this.scene.add.particles(this.rX, this.rY, "packet", {
+      speed: { min: 50, max: 150 },
+      scale: { start: 0.08, end: 0 },
+      blendMode: "ADD",
+      lifespan: 800,
+      quantity: 15,
+    });
+
+    // Fade out the highlight with pulse animation
     this.scene.tweens.add({
       targets: arrivalHighlight,
       alpha: 0,
-      duration: 500,
+      scale: 1.3,
+      duration: 800,
+      ease: "Sine.easeOut",
       onComplete: () => {
         arrivalHighlight.destroy();
       },
+    });
+
+    // Fade out the outer highlight
+    this.scene.tweens.add({
+      targets: outerHighlight,
+      alpha: 0,
+      scale: 1.5,
+      duration: 1200,
+      ease: "Sine.easeOut",
+      onComplete: () => {
+        outerHighlight.destroy();
+      },
+    });
+
+    // Clean up particles after animation
+    this.scene.time.delayedCall(800, () => {
+      particles.destroy();
     });
   }
 
@@ -2112,58 +2384,262 @@ class MessageHandler {
 
     console.log("Final selected words:", this.selectedWords);
   }
-  displaySpeechBubble(x, y, message) {
-    // Create a speech bubble at the given coordinates
-    const speechBubble = this.scene.add.image(x, y - 50, "Popup");
-    speechBubble.setOrigin(0.5);
-    speechBubble.setScale(1).setDepth(1);
+  displaySpeechBubble(x, y, message, isEncrypted = false) {
+    // Store the message that's being displayed for consistency
+    if (isEncrypted) {
+      this.currentDisplayedEncryptedMessage = message;
+    } else {
+      this.currentDisplayedMessage = message;
+    }
 
-    const bubbleWidth = speechBubble.width * speechBubble.scaleX - 20;
+    // Create a cyberpunk-themed container for our custom speech bubble
+    const bubbleContainer = this.scene.add.container(x, y - 80).setDepth(10);
 
-    // Add the user's message inside the bubble
-    const bubbleText = this.scene.add
-      .text(x, y, message, {
-        fontSize: "18px",
-        fill: "#000000",
-        wordWrap: { width: bubbleWidth, useAdvancedWrap: true },
+    // Create a custom speech bubble background with hexagonal/terminal style
+    const bubbleBg = this.scene.add.graphics();
+    const bubbleWidth = 320;
+    const bubbleHeight = 160;
+    const cornerSize = 15;
+
+    // Fill with translucent dark background
+    bubbleBg.fillStyle(0x000a14, 0.85);
+    bubbleBg.fillRoundedRect(
+      -bubbleWidth / 2,
+      -bubbleHeight / 2,
+      bubbleWidth,
+      bubbleHeight,
+      5
+    );
+
+    // Add tech-styled border
+    bubbleBg.lineStyle(2, 0x00ffaa, 0.9);
+    bubbleBg.strokeRoundedRect(
+      -bubbleWidth / 2,
+      -bubbleHeight / 2,
+      bubbleWidth,
+      bubbleHeight,
+      5
+    );
+
+    // Add corner accents for cyberpunk style
+    // Top-left corner
+    bubbleBg.lineStyle(3, 0x00ffaa, 1);
+    bubbleBg.beginPath();
+    bubbleBg.moveTo(-bubbleWidth / 2, -bubbleHeight / 2 + cornerSize);
+    bubbleBg.lineTo(-bubbleWidth / 2, -bubbleHeight / 2);
+    bubbleBg.lineTo(-bubbleWidth / 2 + cornerSize, -bubbleHeight / 2);
+    bubbleBg.strokePath();
+
+    // Top-right corner
+    bubbleBg.beginPath();
+    bubbleBg.moveTo(bubbleWidth / 2 - cornerSize, -bubbleHeight / 2);
+    bubbleBg.lineTo(bubbleWidth / 2, -bubbleHeight / 2);
+    bubbleBg.lineTo(bubbleWidth / 2, -bubbleHeight / 2 + cornerSize);
+    bubbleBg.strokePath();
+
+    // Bottom-left corner
+    bubbleBg.beginPath();
+    bubbleBg.moveTo(-bubbleWidth / 2, bubbleHeight / 2 - cornerSize);
+    bubbleBg.lineTo(-bubbleWidth / 2, bubbleHeight / 2);
+    bubbleBg.lineTo(-bubbleWidth / 2 + cornerSize, bubbleHeight / 2);
+    bubbleBg.strokePath();
+
+    // Bottom-right corner
+    bubbleBg.beginPath();
+    bubbleBg.moveTo(bubbleWidth / 2 - cornerSize, bubbleHeight / 2);
+    bubbleBg.lineTo(bubbleWidth / 2, bubbleHeight / 2);
+    bubbleBg.lineTo(bubbleWidth / 2, bubbleHeight / 2 - cornerSize);
+    bubbleBg.strokePath();
+
+    // Add a terminal-style header bar
+    const headerBg = this.scene.add
+      .rectangle(0, -bubbleHeight / 2 + 15, bubbleWidth - 4, 30, 0x001a1a, 1)
+      .setStrokeStyle(1, 0x00ffaa);
+
+    // Add message source indicator
+    const headerText = this.scene.add
+      .text(0, -bubbleHeight / 2 + 15, "DEFENDER: TX", {
+        fontSize: "14px",
+        fontFamily: "Courier New",
+        fill: "#00ffaa",
+        align: "center",
       })
-      .setOrigin(0.5)
-      .setDepth(2)
-      .setAlpha(0);
+      .setOrigin(0.5);
 
-    Phaser.Display.Align.In.Center(bubbleText, speechBubble);
+    // Add a connection strength indicator
+    const connectionText = this.scene.add
+      .text(bubbleWidth / 2 - 40, -bubbleHeight / 2 + 15, "SECURE", {
+        fontSize: "11px",
+        fontFamily: "Courier New",
+        fill: "#00ff00",
+        align: "right",
+      })
+      .setOrigin(0.5);
 
-    speechBubble.setAlpha(0);
+    // Add a triangle pointer at the bottom of the bubble
+    const pointer = this.scene.add.graphics();
+    pointer.fillStyle(0x000a14, 0.85);
+    pointer.lineStyle(2, 0x00ffaa, 0.9);
+    pointer.beginPath();
+    pointer.moveTo(-15, bubbleHeight / 2);
+    pointer.lineTo(0, bubbleHeight / 2 + 20);
+    pointer.lineTo(15, bubbleHeight / 2);
+    pointer.closePath();
+    pointer.fillPath();
+    pointer.strokePath();
 
-    // Add fade-in animation
+    // Add the text with better wrapping and style
+    const bubbleText = this.scene.add
+      .text(0, 5, message, {
+        fontSize: "18px",
+        fontFamily: "Courier New",
+        fill: "#ffffff",
+        stroke: "#00332a",
+        strokeThickness: 1,
+        align: "center",
+        wordWrap: { width: bubbleWidth - 40, useAdvancedWrap: true },
+        lineSpacing: 5,
+      })
+      .setOrigin(0.5);
+
+    // Add scan lines overlay effect (subtle)
+    const scanLines = this.scene.add.graphics();
+    scanLines.lineStyle(1, 0x00ffaa, 0.1);
+    for (let i = -bubbleHeight / 2 + 30; i < bubbleHeight / 2; i += 4) {
+      scanLines.beginPath();
+      scanLines.moveTo(-bubbleWidth / 2 + 5, i);
+      scanLines.lineTo(bubbleWidth / 2 - 5, i);
+      scanLines.strokePath();
+    }
+
+    // Add a typing animation for the text
+    const fullText = message;
+    bubbleText.setText("");
+    let currentCharacter = 0;
+
+    // Create typing timer
+    const typingTimer = this.scene.time.addEvent({
+      delay: 20,
+      repeat: fullText.length - 1,
+      callback: () => {
+        bubbleText.text += fullText[currentCharacter];
+        currentCharacter++;
+      },
+    });
+
+    // Add all elements to the container
+    bubbleContainer.add([
+      bubbleBg,
+      headerBg,
+      headerText,
+      connectionText,
+      bubbleText,
+      pointer,
+      scanLines,
+    ]);
+
+    // Start with zero alpha
+    bubbleContainer.setAlpha(0);
+
+    // Add fade-in animation with slight bounce effect
     this.scene.tweens.add({
-      targets: [speechBubble, bubbleText],
+      targets: bubbleContainer,
       alpha: 1,
+      y: y - 70, // Slight upward animation
       duration: 500,
-      ease: "Power2",
+      ease: "Back.easeOut",
     });
 
-    this.scene.time.delayedCall(3000, () => {
-      bubbleText.destroy();
-      speechBubble.destroy();
+    // Add subtle floating animation
+    this.scene.tweens.add({
+      targets: bubbleContainer,
+      y: "-=5",
+      duration: 2000,
+      yoyo: true,
+      repeat: 1,
+      ease: "Sine.easeInOut",
     });
+
+    // Automatically remove the speech bubble after a delay
+    this.scene.time.delayedCall(5000, () => {
+      this.scene.tweens.add({
+        targets: bubbleContainer,
+        alpha: 0,
+        y: "-=30",
+        duration: 700,
+        ease: "Power2",
+        onComplete: () => {
+          bubbleContainer.destroy();
+        },
+      });
+    });
+
+    return bubbleContainer; // Return for potential future reference
   }
+
+  // Update the closePopup method to ensure proper cleanup of word selection elements
 
   closePopup() {
     // Destroy previous menu background and text
-    if (this.menuBackground) this.menuBackground.destroy();
-    if (this.menuText) this.menuText.destroy();
-    if (this.messageInput) this.messageInput.destroy();
-    if (this.menuOverlay) this.menuOverlay.destroy();
-    if (this.menuBorder) this.menuBorder.destroy();
+    if (this.menuBackground) {
+      this.menuBackground.destroy();
+      this.menuBackground = null;
+    }
+
+    if (this.menuText) {
+      this.menuText.destroy();
+      this.menuText = null;
+    }
+
+    if (this.messageInput) {
+      this.messageInput.destroy();
+      this.messageInput = null;
+    }
+
+    if (this.menuOverlay) {
+      this.menuOverlay.destroy();
+      this.menuOverlay = null;
+    }
+
+    if (this.menuBorder) {
+      this.menuBorder.destroy();
+      this.menuBorder = null;
+    }
+
+    if (this.headerBar) {
+      this.headerBar.destroy();
+      this.headerBar = null;
+    }
+
+    // Clean up word selection timer
+    if (this.wordSelectionTimer) {
+      this.wordSelectionTimer.remove();
+      this.wordSelectionTimer = null;
+    }
+
+    if (this.wordSelectionText) {
+      this.wordSelectionText.destroy();
+      this.wordSelectionText = null;
+    }
+
+    // Clean up keyboard listener
+    if (this.keydownListener) {
+      this.scene.input.keyboard.off("keydown", this.keydownListener);
+      this.keydownListener = null;
+    }
 
     // Destroy any additional menu elements
     if (this.menuElements) {
       this.menuElements.forEach((element) => {
-        if (element && element.destroy) element.destroy();
+        if (element && element.destroy) {
+          element.destroy();
+        }
       });
       this.menuElements = [];
     }
+
+    // Set menuActive state to false
+    this.menuActive = false;
   }
 
   displayTokenizedMessage(tokenizedMessage) {

@@ -9,6 +9,9 @@ class TimeManager {
 
     // Create timer display
     this.createTimerDisplay();
+
+    // NEW CODE: Add time purchase button
+    this.createTimePurchaseButton();
   }
 
   createTimerDisplay() {
@@ -50,6 +53,139 @@ class TimeManager {
       repeat: -1,
       paused: true, // Start paused
     });
+  }
+
+  createTimePurchaseButton() {
+    // Create a "Buy Time" button in the bottom right corner
+    const buttonX = this.scene.scale.width - 100;
+    const buttonY = this.scene.scale.height - 50;
+
+    // Create button container (separate from timer container)
+    this.timeButtonContainer = this.scene.add.container(0, 0).setDepth(100);
+
+    const buttonBg = this.scene.add
+      .rectangle(buttonX, buttonY, 150, 50, 0x003300, 0.8)
+      .setOrigin(0.5)
+      .setStrokeStyle(2, 0x00ff00)
+      .setInteractive()
+      .on("pointerdown", () => this.purchaseExtraTime())
+      .on("pointerover", () => buttonBg.setFillStyle(0x006600))
+      .on("pointerout", () => buttonBg.setFillStyle(0x003300));
+
+    // Add button text
+    const buttonText = this.scene.add
+      .text(buttonX, buttonY, "+5s (10 CC)", {
+        fontSize: "18px",
+        fontFamily: "Courier New",
+        fill: "#00ff00",
+        stroke: "#003300",
+        strokeThickness: 2,
+      })
+      .setOrigin(0.5);
+
+    // Add items to button container
+    this.timeButtonContainer.add([buttonBg, buttonText]);
+  }
+
+  purchaseExtraTime() {
+    // Only allow time purchase when timer is active
+    if (!this.isActive) return;
+
+    // Check if player has enough coins
+    if (
+      this.scene.walletManager &&
+      typeof this.scene.walletManager.spend === "function"
+    ) {
+      const purchased = this.scene.walletManager.spend(10);
+
+      if (purchased) {
+        // Add 5 seconds to timer
+        this.timeRemaining += 5000; // 5 seconds in milliseconds
+
+        // Create success effect
+        const successText = this.scene.add
+          .text(
+            this.scene.scale.width / 2,
+            this.scene.scale.height / 2,
+            "+5 SECONDS ADDED",
+            {
+              fontSize: "28px",
+              fill: "#00ff00",
+              backgroundColor: "#000000",
+              padding: { x: 15, y: 10 },
+              stroke: "#ffffff",
+              strokeThickness: 2,
+            }
+          )
+          .setOrigin(0.5)
+          .setDepth(1000);
+
+        // Add pulse effect
+        this.scene.tweens.add({
+          targets: successText,
+          scale: { from: 0.8, to: 1.2 },
+          duration: 500,
+          yoyo: true,
+          repeat: 1,
+          onComplete: () => {
+            this.scene.tweens.add({
+              targets: successText,
+              alpha: 0,
+              y: "-=50",
+              duration: 500,
+              onComplete: () => successText.destroy(),
+            });
+          },
+        });
+
+        // Flash the timer text to indicate time added
+        this.timerText.setColor("#00ffff");
+        this.scene.time.delayedCall(500, () => {
+          this.timerText.setColor("#00ff00");
+        });
+      } else {
+        // Show insufficient funds message
+        const errorText = this.scene.add
+          .text(
+            this.scene.scale.width / 2,
+            this.scene.scale.height / 2,
+            "NOT ENOUGH CYBERCOINS",
+            {
+              fontSize: "24px",
+              fill: "#ff0000",
+              backgroundColor: "#000000",
+              padding: { x: 10, y: 5 },
+            }
+          )
+          .setOrigin(0.5)
+          .setDepth(1000);
+
+        // Fade out error text
+        this.scene.tweens.add({
+          targets: errorText,
+          alpha: 0,
+          y: "-=30",
+          duration: 1500,
+          onComplete: () => errorText.destroy(),
+        });
+      }
+    }
+  }
+
+  destroy() {
+    if (this.warningTween) {
+      this.warningTween.stop();
+      this.warningTween = null;
+    }
+    if (this.timerEvent) {
+      this.timerEvent.remove();
+    }
+    if (this.timerContainer) {
+      this.timerContainer.destroy();
+    }
+    if (this.timeButtonContainer) {
+      this.timeButtonContainer.destroy();
+    }
   }
 
   startTimer() {

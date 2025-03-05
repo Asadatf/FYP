@@ -65,6 +65,13 @@ class NetworkPathManager {
     this.nodes.forEach((node) => {
       node.setInteractive();
       node.on("pointerdown", () => {
+        // Check if this node is already configured
+        const deviceType = node.deviceType || node.type;
+        if (this.deviceConfigs[deviceType]?.configured) {
+          console.log("Device already configured:", deviceType);
+          return; // Skip opening the popup for configured devices
+        }
+
         // Start timer on first interaction only
         if (firstInteraction && this.timeManager) {
           this.timeManager.startTimer();
