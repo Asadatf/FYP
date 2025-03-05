@@ -22,8 +22,12 @@ class DecryptionPuzzle {
     this.playerInput = "";
 
     // Create a stylish container for the puzzle
-    const puzzleContainer = this.scene.add.container(this.scene.scale.width / 2, this.scene.scale.height / 2 - 150);
-    
+    // Move the main puzzle container more to the left
+    const puzzleContainer = this.scene.add.container(
+      Math.min(this.scene.scale.width * 0.35, this.scene.scale.width / 2 - 200),
+      this.scene.scale.height / 2 - 150
+    );
+
     // Add decorative elements
     this.decorativeLine = this.scene.add.graphics();
     this.decorativeLine.lineStyle(2, 0x00ff00, 0.8);
@@ -31,12 +35,14 @@ class DecryptionPuzzle {
     puzzleContainer.add(this.decorativeLine);
 
     // Create title with animation
-    this.titleText = this.scene.add.text(0, -80, "DECRYPT THE MESSAGE", {
-      fontSize: '28px',
-      fill: '#00ff00',
-      fontStyle: 'bold'
-    }).setOrigin(0.5);
-    
+    this.titleText = this.scene.add
+      .text(0, -80, "DECRYPT THE MESSAGE", {
+        fontSize: "28px",
+        fill: "#00ff00",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5);
+
     // Add pulse animation to title
     this.scene.tweens.add({
       targets: this.titleText,
@@ -45,15 +51,17 @@ class DecryptionPuzzle {
       duration: 1000,
       yoyo: true,
       repeat: -1,
-      ease: 'Sine.easeInOut'
+      ease: "Sine.easeInOut",
     });
 
     // Create encrypted text with typewriter effect
-    this.encryptedText = this.scene.add.text(0, 0, '', {
-      fontSize: '32px',
-      fill: '#ffffff',
-      fontFamily: 'monospace'
-    }).setOrigin(0.5);
+    this.encryptedText = this.scene.add
+      .text(0, 0, "", {
+        fontSize: "32px",
+        fill: "#ffffff",
+        fontFamily: "monospace",
+      })
+      .setOrigin(0.5);
 
     // Typewriter effect for encrypted text
     let displayText = `${this.solution}`;
@@ -67,21 +75,23 @@ class DecryptionPuzzle {
           typewriterTimer.destroy();
         }
       },
-      repeat: displayText.length - 1
+      repeat: displayText.length - 1,
     });
 
     // Create input field with styling
-    this.inputText = this.scene.add.text(0, 60, "Your Input: ", {
-      fontSize: '24px',
-      fill: '#4CAF50',
-      backgroundColor: '#1a1a1a',
-      padding: { x: 10, y: 5 },
-      fixedWidth: 300
-    }).setOrigin(0.5);
+    this.inputText = this.scene.add
+      .text(0, 60, "Your Input: ", {
+        fontSize: "24px",
+        fill: "#4CAF50",
+        backgroundColor: "#1a1a1a",
+        padding: { x: 10, y: 5 },
+        fixedWidth: 300,
+      })
+      .setOrigin(0.5);
 
     // Add elements to container
     puzzleContainer.add([this.titleText, this.encryptedText, this.inputText]);
-    
+
     this.createStylishInstructions();
     this.createAnimatedButton();
     this.setupInputHandler();
@@ -104,9 +114,9 @@ class DecryptionPuzzle {
       const x = Math.random() * this.scene.scale.width;
       const startY = Math.random() * this.scene.scale.height;
       const text = this.scene.add.text(x, startY, this.getRandomChar(), {
-        fontSize: '16px',
-        fill: '#00ff00',
-        alpha: 0.3
+        fontSize: "16px",
+        fill: "#00ff00",
+        alpha: 0.3,
       });
 
       this.scene.tweens.add({
@@ -117,18 +127,25 @@ class DecryptionPuzzle {
         onRepeat: () => {
           text.y = -50;
           // text.setText(this.getRandomChar());
-        }
+        },
       });
 
       this.backgroundElements.push(text);
     }
-    
+
     this.backgroundElements.push(overlay);
   }
 
   createStylishInstructions() {
+    // Position the instructions container more to the right side
+    // and adjust based on screen width
+    const containerX = Math.min(
+      this.scene.scale.width - 250,
+      this.scene.scale.width * 0.75
+    );
+
     const instructionsContainer = this.scene.add.container(
-      this.scene.scale.width - 400,
+      containerX,
       this.scene.scale.height / 2
     );
 
@@ -139,29 +156,38 @@ class DecryptionPuzzle {
     panel.lineStyle(2, 0x00ff00, 0.8);
     panel.strokeRoundedRect(-200, -200, 400, 400, 16);
 
-    const title = this.scene.add.text(0, -170, "Decryption Guide", {
-      fontSize: '24px',
-      fill: '#00ff00',
-      fontStyle: 'bold'
-    }).setOrigin(0.5);
+    const title = this.scene.add
+      .text(0, -170, "Decryption Guide", {
+        fontSize: "24px",
+        fill: "#00ff00",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5);
 
-    const instructions = this.scene.add.text(0, -50, [
-      "Caesar Cipher Shift: 3",
-      "",
-      "Original:  ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-      "Shifted:   DEFGHIJKLMNOPQRSTUVWXYZABC",
-      "",
-      "To decrypt:",
-      "• Find encrypted letter",
-      "• Shift 3 places LEFT",
-      "• Type solution",
-      "",
-      "Press BACKSPACE to undo"
-    ].join('\n'), {
-      fontSize: '16px',
-      fill: '#ffffff',
-      align: 'center'
-    }).setOrigin(0.5);
+    const instructions = this.scene.add
+      .text(
+        0,
+        -50,
+        [
+          "Caesar Cipher Shift: 3",
+          "",
+          "Original:  ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+          "Shifted:   DEFGHIJKLMNOPQRSTUVWXYZABC",
+          "",
+          "To decrypt:",
+          "• Find encrypted letter",
+          "• Shift 3 places LEFT",
+          "• Type solution",
+          "",
+          "Press BACKSPACE to undo",
+        ].join("\n"),
+        {
+          fontSize: "16px",
+          fill: "#ffffff",
+          align: "center",
+        }
+      )
+      .setOrigin(0.5);
 
     instructionsContainer.add([panel, title, instructions]);
     this.backgroundElements.push(instructionsContainer);
@@ -172,62 +198,77 @@ class DecryptionPuzzle {
     buttonBackground.fillStyle(0x00ff00, 1);
     buttonBackground.fillRoundedRect(-100, -25, 200, 50, 10);
 
-    this.checkSolutionButton = this.scene.add.container(
-      this.scene.scale.width / 2,
-      this.scene.scale.height / 2 + 150,
-      [
-        buttonBackground,
-        this.scene.add.text(0, 0, "CHECK SOLUTION", {
-          fontSize: '20px',
-          fill: '#000000',
-          fontStyle: 'bold'
-        }).setOrigin(0.5)
-      ]
-    ).setSize(200, 50);
+    // Position the button below the main input area
+    const buttonX = Math.min(
+      this.scene.scale.width * 0.35,
+      this.scene.scale.width / 2 - 200
+    );
 
-    this.checkSolutionButton.setInteractive()
-      .on('pointerover', () => {
+    this.checkSolutionButton = this.scene.add
+      .container(buttonX, this.scene.scale.height / 2 + 100, [
+        buttonBackground,
+        this.scene.add
+          .text(0, 0, "CHECK SOLUTION", {
+            fontSize: "20px",
+            fill: "#000000",
+            fontStyle: "bold",
+          })
+          .setOrigin(0.5),
+      ])
+      .setSize(200, 50);
+
+    this.checkSolutionButton
+      .setInteractive()
+      .on("pointerover", () => {
         buttonBackground.clear();
-        buttonBackground.fillStyle(0x4CAF50, 1);
+        buttonBackground.fillStyle(0x4caf50, 1);
         buttonBackground.fillRoundedRect(-100, -25, 200, 50, 10);
       })
-      .on('pointerout', () => {
+      .on("pointerout", () => {
         buttonBackground.clear();
         buttonBackground.fillStyle(0x00ff00, 1);
         buttonBackground.fillRoundedRect(-100, -25, 200, 50, 10);
       })
-      .on('pointerdown', () => this.checkSolution());
+      .on("pointerdown", () => this.checkSolution());
   }
 
   createParticleEffect() {
     // Create particle effect for correct solution
-    this.particles = this.scene.add.particles(0, 0, 'packet', {
+    this.particles = this.scene.add.particles(0, 0, "packet", {
       speed: { min: -800, max: 800 },
       angle: { min: 0, max: 360 },
       scale: { start: 0.1, end: 0 },
-      blendMode: 'ADD',
+      blendMode: "ADD",
       active: false,
       lifespan: 600,
-      gravityY: 800
+      gravityY: 800,
     });
   }
 
   checkSolution() {
     if (this.playerInput.toLowerCase() === this.originalText.toLowerCase()) {
       // Store success text reference for cleanup
-      const successText = this.scene.add.text(
-        this.scene.scale.width / 2,
-        this.scene.scale.height / 2,
-        "DECRYPTION SUCCESSFUL!",
-        {
-          fontSize: '36px',
-          fill: '#00ff00',
-          fontStyle: 'bold'
-        }
-      ).setOrigin(0.5).setAlpha(0);
+      const successText = this.scene.add
+        .text(
+          this.scene.scale.width / 2,
+          this.scene.scale.height / 2,
+          "DECRYPTION SUCCESSFUL!",
+          {
+            fontSize: "36px",
+            fill: "#00ff00",
+            fontStyle: "bold",
+            backgroundColor: null, // Remove any background
+            padding: 0, // Remove any padding
+          }
+        )
+        .setOrigin(0.5)
+        .setAlpha(0);
 
       // Trigger particle effect
-      this.particles.setPosition(this.scene.scale.width / 2, this.scene.scale.height / 2);
+      this.particles.setPosition(
+        this.scene.scale.width / 2,
+        this.scene.scale.height / 2
+      );
       this.particles.explode(50);
 
       // Success animation sequence
@@ -236,36 +277,74 @@ class DecryptionPuzzle {
         alpha: 1,
         scale: 1.2,
         duration: 1000,
-        ease: 'Power2',
+        ease: "Power2",
         onComplete: () => {
           // Fade out animation
           this.scene.tweens.add({
             targets: successText,
             alpha: 0,
             duration: 500,
-            ease: 'Power2',
+            ease: "Power2",
             onComplete: () => {
               // Clean up all elements
               successText.destroy();
               this.closeExistingElements();
               this.isPuzzleSolved = true;
               this.emitSolved();
-            }
+            },
           });
-        }
+        },
       });
     } else {
-      // Wrong answer shake animation
+      // NEW CODE: Deduct 10 CyberCoins for failure
+      if (
+        this.scene.walletManager &&
+        typeof this.scene.walletManager.spend === "function"
+      ) {
+        this.scene.walletManager.spend(10);
+
+        // Show penalty notification
+        const penaltyText = this.scene.add
+          .text(
+            this.scene.scale.width / 2,
+            this.scene.scale.height / 2 - 100,
+            "WRONG SOLUTION: -10 CC",
+            {
+              fontSize: "24px",
+              fill: "#ff0000",
+              backgroundColor: "#000000",
+              padding: { x: 10, y: 5 },
+              stroke: "#ffffff",
+              strokeThickness: 2,
+            }
+          )
+          .setOrigin(0.5)
+          .setDepth(1000);
+
+        // Fade out penalty text
+        this.scene.tweens.add({
+          targets: penaltyText,
+          alpha: 0,
+          y: "-=30",
+          duration: 1500,
+          ease: "Power2",
+          onComplete: () => {
+            penaltyText.destroy();
+          },
+        });
+      }
+
+      // Original wrong answer shake animation
       this.scene.tweens.add({
         targets: this.inputText,
-        x: '+=10',
+        x: "+=10",
         duration: 50,
         yoyo: true,
         repeat: 3,
         onComplete: () => {
-          this.playerInput = '';
-          this.inputText.setText('Your Input: ');
-        }
+          this.playerInput = "";
+          this.inputText.setText("Your Input: ");
+        },
       });
     }
   }
@@ -279,11 +358,9 @@ class DecryptionPuzzle {
     if (this.titleText) this.titleText.destroy();
     if (this.encryptedText) this.encryptedText.destroy();
     if (this.decorativeLine) this.decorativeLine.destroy();
-    
-    
-    
+
     // Clean up background elements
-    this.backgroundElements.forEach(element => {
+    this.backgroundElements.forEach((element) => {
       if (element && element.destroy) {
         element.destroy();
       }
@@ -295,13 +372,22 @@ class DecryptionPuzzle {
   }
 
   getRandomChar() {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     return chars.charAt(Math.floor(Math.random() * chars.length));
   }
 
   // Existing utility methods remain the same
   generateRandomWord() {
-    const words = ["cyber", "secure", "network", "packet", "encrypt", "defend", "protect", "shield"];
+    const words = [
+      "cyber",
+      "secure",
+      "network",
+      "packet",
+      "encrypt",
+      "defend",
+      "protect",
+      "shield",
+    ];
     return words[Math.floor(Math.random() * words.length)];
   }
 

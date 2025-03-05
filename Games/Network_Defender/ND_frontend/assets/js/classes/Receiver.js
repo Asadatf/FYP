@@ -16,4 +16,15 @@ class Receiver extends Phaser.Physics.Arcade.Image {
     // add defender to existing scene
     this.scene.add.existing(this);
   }
+
+  moveToSwitch(switchX, switchY, onComplete) {
+    this.scene.tweens.add({
+      targets: this,
+      x: switchX,
+      y: switchY,
+      duration: 800,
+      ease: "Power2",
+      onComplete: onComplete,
+    });
+  }
 }

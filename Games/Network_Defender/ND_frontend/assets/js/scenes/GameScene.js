@@ -40,12 +40,18 @@ class GameScene extends Phaser.Scene {
     this.defender = new Defender(this, dX - 100, dY + 200, "defender");
     this.addGlowEffect(this.defender);
 
-    // Creating Receiver
+    // Creating Receiver - Position it further away initially
     const rX = (window.innerWidth * 3) / 4;
     const rY = 300;
+    const receiverOffset = 150; // Distance away from the switch
 
-    this.receiver = new Receiver(this, rX + 60, rY, "receiver");
+    // Position receiver farther from the switch
+    this.receiver = new Receiver(this, rX + receiverOffset, rY, "receiver");
     this.addGlowEffect(this.receiver);
+
+    // Store the receiver's final position (near the switch)
+    this.receiverFinalX = rX + 60;
+    this.receiverFinalY = rY;
 
     // Creating Network Devices
     this.obstacles = this.physics.add.staticGroup();
@@ -87,6 +93,9 @@ class GameScene extends Phaser.Scene {
       this.defender.y,
       "packet"
     );
+
+    // Make the packet follow the defender
+    this.packet.followDefender(this.defender);
 
     // Creating briefcase for encryption
     this.briefcase_red = this.add.image(
@@ -316,75 +325,361 @@ class GameScene extends Phaser.Scene {
     }
   }
 
+  // GameScene.js - Update createBackButton() method
   createBackButton() {
-    // Create a confirmation dialog container
+    // Create a more cyberpunk-styled back button instead of using UiButton
+    const buttonX = this.scale.width - 80;
+    const buttonY = 50;
+
+    // Create button container
+    this.backButtonContainer = this.add
+      .container(buttonX, buttonY)
+      .setDepth(102);
+
+    // Create hexagonal shape for the back button
+    const hexagon = this.add.graphics();
+    hexagon.fillStyle(0x003300, 0.8);
+    hexagon.lineStyle(2, 0x00ff00, 1);
+
+    // Draw hexagon path
+    const hexPoints = [];
+    const size = 40;
+    for (let i = 0; i < 6; i++) {
+      const angle = (i * Math.PI) / 3 - Math.PI / 6;
+      hexPoints.push({
+        x: size * Math.cos(angle),
+        y: size * Math.sin(angle),
+      });
+    }
+
+    hexagon.beginPath();
+    hexagon.moveTo(hexPoints[0].x, hexPoints[0].y);
+    for (let i = 1; i < 6; i++) {
+      hexagon.lineTo(hexPoints[i].x, hexPoints[i].y);
+    }
+    hexagon.closePath();
+    hexagon.fillPath();
+    hexagon.strokePath();
+
+    // Add button text
+    const text = this.add
+      .text(0, 0, "EXIT", {
+        fontSize: "16px",
+        fill: "#00ff00",
+        fontFamily: "Courier New",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5);
+
+    // Add a blinking cursor effect for cyberpunk feel
+    const cursor = this.add
+      .text(text.width / 2 + 5, 0, "_", {
+        fontSize: "16px",
+        fill: "#00ff00",
+        fontFamily: "Courier New",
+      })
+      .setOrigin(0, 0.5);
+
+    this.tweens.add({
+      targets: cursor,
+      alpha: 0,
+      duration: 600,
+      yoyo: true,
+      repeat: -1,
+    });
+
+    // Add elements to container
+    this.backButtonContainer.add([hexagon, text, cursor]);
+
+    // Add hover glow effect
+    const glowGraphics = this.add.graphics();
+    this.backButtonContainer.add(glowGraphics);
+
+    // Add interactivity
+    hexagon
+      .setInteractive(
+        new Phaser.Geom.Polygon(hexPoints),
+        Phaser.Geom.Polygon.Contains
+      )
+      .on("pointerover", () => {
+        this.tweens.add({
+          targets: [text, cursor],
+          scale: 1.1,
+          duration: 100,
+        });
+
+        // Create glow effect
+        this.tweens.add({
+          targets: glowGraphics,
+          alpha: { from: 0.7, to: 0.3 },
+          duration: 800,
+          yoyo: true,
+          repeat: -1,
+          onUpdate: () => {
+            glowGraphics.clear();
+            glowGraphics.lineStyle(4, 0x00ff00, glowGraphics.alpha);
+            glowGraphics.strokePath();
+          },
+        });
+      })
+      .on("pointerout", () => {
+        this.tweens.add({
+          targets: [text, cursor],
+          scale: 1,
+          duration: 100,
+        });
+
+        this.tweens.killTweensOf(glowGraphics);
+        glowGraphics.clear();
+      })
+      .on("pointerdown", () => {
+        if (this.timeManager.isActive) {
+          // Pause the timer
+          this.timeManager.isActive = false;
+          // Show confirmation dialog
+          this.showConfirmationDialog();
+        } else {
+          this.scene.start("Title");
+        }
+      });
+
+    // Add a terminal-style animation on first appearance
+    this.backButtonContainer.setAlpha(0);
+    this.tweens.add({
+      targets: this.backButtonContainer,
+      alpha: 1,
+      duration: 600,
+      ease: "Power2",
+    });
+  }
+
+  // Create a new method for the enhanced confirmation dialog
+  showConfirmationDialog() {
+    // Hide previous dialog if exists
+    if (this.confirmDialog) {
+      this.confirmDialog.destroy();
+    }
+
+    // Create a new stylized confirmation dialog
     this.confirmDialog = this.add
       .container(this.scale.width / 2, this.scale.height / 2)
       .setDepth(1000)
-      .setVisible(false);
+      .setAlpha(0);
 
-    // Add dialog background
-    const dialogBg = this.add
-      .rectangle(0, 0, 400, 200, 0x000000, 0.9)
-      .setStrokeStyle(2, 0x00ff00);
+    // Add a dark overlay
+    const overlay = this.add
+      .rectangle(0, 0, this.scale.width, this.scale.height, 0x000000, 0.7)
+      .setOrigin(0.5)
+      .setInteractive() // Makes it act as a modal barrier
+      .on("pointerdown", () => {
+        // Keep the event from propagating
+        return false;
+      });
 
-    // Add dialog text
-    const dialogText = this.add
-      .text(0, -40, "Return to main menu?\nYour progress will be lost.", {
-        fontSize: "24px",
-        fill: "#ffffff",
+    // Add background with terminal style
+    const bg = this.add.graphics();
+    bg.fillStyle(0x000000, 0.9);
+    bg.fillRect(-250, -150, 500, 300);
+    bg.lineStyle(3, 0x00ffaa, 1);
+    bg.strokeRect(-250, -150, 500, 300);
+
+    // Add decorative terminal elements
+    bg.lineStyle(2, 0x00ffaa, 0.8);
+    // Top-left corner detail
+    bg.beginPath();
+    bg.moveTo(-250, -120);
+    bg.lineTo(-220, -120);
+    bg.lineTo(-220, -150);
+    bg.strokePath();
+
+    // Top-right corner detail
+    bg.beginPath();
+    bg.moveTo(250, -120);
+    bg.lineTo(220, -120);
+    bg.lineTo(220, -150);
+    bg.strokePath();
+
+    // Bottom-left corner detail
+    bg.beginPath();
+    bg.moveTo(-250, 120);
+    bg.lineTo(-220, 120);
+    bg.lineTo(-220, 150);
+    bg.strokePath();
+
+    // Bottom-right corner detail
+    bg.beginPath();
+    bg.moveTo(250, 120);
+    bg.lineTo(220, 120);
+    bg.lineTo(220, 150);
+    bg.strokePath();
+
+    // Add header bar
+    const headerBg = this.add.rectangle(0, -120, 500, 30, 0x001a1a, 1);
+    const headerText = this.add
+      .text(0, -120, "SYSTEM WARNING", {
+        fontFamily: "Courier New",
+        fontSize: "20px",
+        fill: "#00ffaa",
         align: "center",
       })
       .setOrigin(0.5);
 
-    // Add confirm and cancel buttons
-    const confirmButton = new UiButton(
-      this,
-      -80,
-      40,
-      "button1",
-      "button2",
-      "Yes",
+    // Add system prompt text using a typewriter effect
+    const warningText = this.add
+      .text(0, -40, "", {
+        fontFamily: "Courier New",
+        fontSize: "24px",
+        fill: "#ff3300",
+        align: "center",
+        wordWrap: { width: 450 },
+      })
+      .setOrigin(0.5);
+
+    // Typewriter effect
+    let displayText = "Exit to main menu?\nAll mission progress will be lost.";
+    let currentChar = 0;
+
+    const typewriterTimer = this.time.addEvent({
+      delay: 30,
+      callback: () => {
+        warningText.text += displayText[currentChar];
+        currentChar++;
+        if (currentChar === displayText.length) {
+          typewriterTimer.destroy();
+        }
+      },
+      repeat: displayText.length - 1,
+    });
+
+    // Add button style function
+    const createCyberButton = (x, y, text, color, callback) => {
+      const buttonContainer = this.add.container(x, y);
+
+      // Button shape - angle in radians
+      const buttonShape = this.add.graphics();
+      buttonShape.fillStyle(color === "green" ? 0x003300 : 0x330000, 0.9);
+      buttonShape.lineStyle(2, color === "green" ? 0x00ff00 : 0xff0000, 1);
+
+      // Draw angled rectangle
+      buttonShape.beginPath();
+      buttonShape.moveTo(-80, -20);
+      buttonShape.lineTo(80, -20);
+      buttonShape.lineTo(90, 0);
+      buttonShape.lineTo(80, 20);
+      buttonShape.lineTo(-80, 20);
+      buttonShape.lineTo(-90, 0);
+      buttonShape.closePath();
+      buttonShape.fillPath();
+      buttonShape.strokePath();
+
+      // Button text
+      const buttonText = this.add
+        .text(0, 0, text, {
+          fontFamily: "Courier New",
+          fontSize: "20px",
+          fill: color === "green" ? "#00ff00" : "#ff0000",
+          align: "center",
+        })
+        .setOrigin(0.5);
+
+      // Add to container
+      buttonContainer.add([buttonShape, buttonText]);
+
+      // Make interactive
+      buttonShape
+        .setInteractive(
+          new Phaser.Geom.Polygon([
+            -80, -20, 80, -20, 90, 0, 80, 20, -80, 20, -90, 0,
+          ]),
+          Phaser.Geom.Polygon.Contains
+        )
+        .on("pointerover", () => {
+          this.tweens.add({
+            targets: buttonContainer,
+            scaleX: 1.05,
+            scaleY: 1.05,
+            duration: 100,
+          });
+        })
+        .on("pointerout", () => {
+          this.tweens.add({
+            targets: buttonContainer,
+            scaleX: 1,
+            scaleY: 1,
+            duration: 100,
+          });
+        })
+        .on("pointerdown", callback);
+
+      return buttonContainer;
+    };
+
+    // Create confirm and cancel buttons
+    const confirmButton = createCyberButton(
+      -120,
+      80,
+      "CONFIRM",
+      "green",
       () => {
         this.scene.start("Title");
       }
     );
 
-    const cancelButton = new UiButton(
-      this,
-      80,
-      40,
-      "button1",
-      "button2",
-      "No",
-      () => {
-        this.confirmDialog.setVisible(false);
-      }
-    );
+    const cancelButton = createCyberButton(120, 80, "CANCEL", "red", () => {
+      // Resume timer
+      this.timeManager.isActive = true;
 
-    // Add all elements to the dialog container
-    this.confirmDialog.add([dialogBg, dialogText, confirmButton, cancelButton]);
+      // Close dialog with animation
+      this.tweens.add({
+        targets: this.confirmDialog,
+        alpha: 0,
+        y: this.scale.height / 2 + 20,
+        duration: 300,
+        ease: "Power2",
+        onComplete: () => {
+          this.confirmDialog.destroy();
+          this.confirmDialog = null;
+        },
+      });
+    });
 
-    // Create the main back button
-    const backButton = new UiButton(
-      this,
-      this.scale.width - 150,
-      50,
-      "button1",
-      "button2",
-      "Back",
-      () => {
-        if (this.timeManager.isActive) {
-          // Pause the timer
-          this.timeManager.isActive = false;
-          // Show confirmation dialog
-          this.confirmDialog.setVisible(true);
-        } else {
-          this.scene.start("Title");
-        }
-      }
-    );
-    backButton.setDepth(102);
+    // Add a blinking cursor for immersion
+    const cursor = this.add
+      .text(0, 30, "_", {
+        fontFamily: "Courier New",
+        fontSize: "24px",
+        fill: "#00ffaa",
+      })
+      .setOrigin(0.5);
+
+    this.tweens.add({
+      targets: cursor,
+      alpha: 0,
+      duration: 500,
+      yoyo: true,
+      repeat: -1,
+    });
+
+    // Add all elements to container
+    this.confirmDialog.add([
+      overlay,
+      bg,
+      headerBg,
+      headerText,
+      warningText,
+      confirmButton,
+      cancelButton,
+      cursor,
+    ]);
+
+    // Show dialog with animation
+    this.tweens.add({
+      targets: this.confirmDialog,
+      alpha: 1,
+      y: { from: this.scale.height / 2 - 30, to: this.scale.height / 2 },
+      duration: 300,
+      ease: "Power2",
+    });
   }
 
   handleTimeUp() {
@@ -576,9 +871,10 @@ class GameScene extends Phaser.Scene {
     // Create and initialize network tutorial overlay
     this.networkTutorial = new NetworkTutorialOverlay(this);
 
-    // Create help button for network configuration
+    // Create help button for network configuration - aligned with exit button
     const helpButton = this.add
-      .text(this.scale.width - 70, 100, "?", {
+      .text(this.scale.width - 80, 140, "?", {
+        // Updated Y position to 140 (exit button at 50 + 90px spacing)
         fontSize: "32px",
         fontStyle: "bold",
         backgroundColor: "#004466",
@@ -606,9 +902,10 @@ class GameScene extends Phaser.Scene {
       this.networkTutorial.showTutorial();
     });
 
-    // Add help text
+    // Add help text - positioned just below the button
     const helpText = this.add
-      .text(this.scale.width - 70, 130, "Network Guide", {
+      .text(this.scale.width - 80, 170, "Network Guide", {
+        // Text positioned 30px below button center
         fontSize: "12px",
         fill: "#ffffff",
       })
@@ -689,9 +986,10 @@ class GameScene extends Phaser.Scene {
     // Create and initialize encryption guide overlay
     this.encryptionGuide = new EncryptionGuideOverlay(this);
 
-    // Create help button for encryption guide
+    // Create help button for encryption guide - aligned with other buttons
     const encryptHelpButton = this.add
-      .text(this.scale.width - 70, 160, "?", {
+      .text(this.scale.width - 80, 230, "?", {
+        // Updated Y position to 230 (network button at 140 + 90px spacing)
         fontSize: "32px",
         fontStyle: "bold",
         backgroundColor: "#440066",
@@ -719,9 +1017,10 @@ class GameScene extends Phaser.Scene {
       this.encryptionGuide.showTutorial();
     });
 
-    // Add help text
+    // Add help text - positioned just below the button
     const encryptHelpText = this.add
-      .text(this.scale.width - 70, 190, "Encryption Guide", {
+      .text(this.scale.width - 80, 260, "Encryption Guide", {
+        // Text positioned 30px below button center
         fontSize: "12px",
         fill: "#ffffff",
       })
@@ -762,48 +1061,72 @@ class GameScene extends Phaser.Scene {
       this.scale.width / 2 + 200,
       150,
       this.scale.width - 100,
-      180
+      230 // Update Y coordinate to point to the new button position
     );
 
     // Add arrowhead
     arrow.fillStyle(0xff00ff, 1);
     arrow.fillTriangle(
       this.scale.width - 100,
-      180,
+      230, // Update Y coordinate for arrowhead
       this.scale.width - 110,
-      170,
+      220, // Update Y coordinates for arrowhead points
       this.scale.width - 90,
-      170
+      220 // Update Y coordinates for arrowhead points
     );
 
-    // Animate and fade out
-    this.tweens.add({
+    // Store references to ensure proper cleanup
+    this.encryptionHintElements = [hintText, arrow];
+
+    // Animate and fade out - ensure it disappears
+    const fadeTween = this.tweens.add({
       targets: [hintText, arrow],
       alpha: { from: 1, to: 0 },
-      duration: 4000,
+      duration: 1500,
       delay: 3000,
       ease: "Power2",
       onComplete: () => {
+        // Ensure complete destruction of elements
         hintText.destroy();
         arrow.destroy();
+
+        // Clear references
+        this.encryptionHintElements = null;
       },
     });
 
+    // Store tween reference for potential cleanup
+    this.encryptionHintTween = fadeTween;
+
     // Flash the encryption help button to draw attention
-    this.tweens.add({
+    const buttonTween = this.tweens.add({
       targets: this.encryptHelpButton,
       scale: { from: 1, to: 1.2 },
       duration: 500,
       yoyo: true,
-      repeat: 5,
+      repeat: 3,
       ease: "Sine.easeInOut",
+      onComplete: () => {
+        // Reset button scale
+        if (this.encryptHelpButton) {
+          this.encryptHelpButton.setScale(1);
+        }
+      },
     });
+
+    // Also store this tween reference
+    this.encryptHelpButtonTween = buttonTween;
   }
   // Updated update method for GameScene.js that fixes the interaction issue
   // Add this to your GameScene.js file
 
   update() {
     this.defender.update(this.keys, this.MessageHandler.menuActive);
+
+    // Update packet position to follow defender
+    if (this.packet) {
+      this.packet.update();
+    }
 
     this.nearObstacle = false;
     let nearestObstacle = null;

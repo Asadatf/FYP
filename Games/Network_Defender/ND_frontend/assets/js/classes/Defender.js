@@ -16,21 +16,24 @@ class Defender extends Phaser.Physics.Arcade.Image {
     this.scene.add.existing(this);
   }
 
-  update(keys, menuActive) {
+  update(keys, isPopupActive) {
     this.body.setVelocity(0);
 
-    if (keys.a.isDown && !menuActive) {
-      this.body.setVelocityX(-this.velocity); // Move left
-      this.flipX = true; // Flip sprite to face left
-    } else if (keys.d.isDown && !menuActive) {
-      this.body.setVelocityX(this.velocity); // Move right
-      this.flipX = false; // Flip sprite to face right
-    }
+    // Only allow movement when no popup is active
+    if (!isPopupActive) {
+      if (keys.a.isDown) {
+        this.body.setVelocityX(-this.velocity); // Move left
+        this.flipX = true; // Flip sprite to face left
+      } else if (keys.d.isDown) {
+        this.body.setVelocityX(this.velocity); // Move right
+        this.flipX = false; // Flip sprite to face right
+      }
 
-    if (keys.w.isDown && !menuActive) {
-      this.body.setVelocityY(-this.velocity); // Move up
-    } else if (keys.s.isDown && !menuActive) {
-      this.body.setVelocityY(this.velocity); // Move down
+      if (keys.w.isDown) {
+        this.body.setVelocityY(-this.velocity); // Move up
+      } else if (keys.s.isDown) {
+        this.body.setVelocityY(this.velocity); // Move down
+      }
     }
   }
 }

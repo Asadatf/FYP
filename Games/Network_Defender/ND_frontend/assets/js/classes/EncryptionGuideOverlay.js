@@ -6,6 +6,7 @@ class EncryptionGuideOverlay {
     this.slideElements = []; // Track all created elements for proper cleanup
     this.currentSlide = 0;
     this.isActive = false;
+    this.escKeyListener = null; // Track ESC key listener for cleanup
   }
 
   showTutorial() {
@@ -15,6 +16,21 @@ class EncryptionGuideOverlay {
     this.createTutorialContainer();
     this.createTutorialContent();
     this.showCurrentSlide();
+
+    // Setup ESC key listener
+    this.setupEscapeKeyListener();
+  }
+
+  setupEscapeKeyListener() {
+    // Create a listener for the ESC key to exit the tutorial immediately
+    this.escKeyListener = this.scene.input.keyboard.addKey("ESC");
+    this.escKeyListener.on("down", () => {
+      // Close the tutorial immediately
+      this.closeTutorial();
+    });
+
+    // Note: We're no longer adding the ESC hint text here
+    // It's now added in the showCurrentSlide method for better positioning
   }
 
   createTutorialContainer() {
@@ -168,6 +184,15 @@ class EncryptionGuideOverlay {
       })
       .setOrigin(0.5);
     this.slideElements.push(pageIndicator);
+
+    // Add ESC key hint at the top-left corner
+    const escHint = this.scene.add
+      .text(-290, -190, "Press ESC to exit", {
+        fontSize: "14px",
+        fill: "#aaaaaa",
+      })
+      .setOrigin(0, 0);
+    this.slideElements.push(escHint);
 
     // Add everything to the container
     this.container.add(this.slideElements);
@@ -376,6 +401,13 @@ class EncryptionGuideOverlay {
 
   closeTutorial() {
     if (!this.isActive) return;
+
+    // Remove the ESC key listener
+    if (this.escKeyListener) {
+      this.escKeyListener.off("down");
+      this.scene.input.keyboard.removeKey("ESC");
+      this.escKeyListener = null;
+    }
 
     // Fade out animation
     this.scene.tweens.add({

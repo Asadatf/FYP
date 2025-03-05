@@ -290,6 +290,9 @@ class ManInTheMiddleAttack {
     graphics.strokePath();
   }
 
+  // Modification for ManInTheMiddleAttack.js
+  // Update the resolveAttack method to deduct coins when ignoring an attack that succeeds
+
   resolveAttack(choice) {
     // Thoroughly clean up all attack UI elements
     if (this.attackContainer) {
@@ -345,6 +348,45 @@ class ManInTheMiddleAttack {
       const attackSucceeds = Math.random() < 0.7; // 70% chance attack succeeds
 
       if (attackSucceeds) {
+        // NEW CODE: Deduct 15 CyberCoins when attack succeeds after ignoring
+        if (
+          this.scene.walletManager &&
+          typeof this.scene.walletManager.spend === "function"
+        ) {
+          this.scene.walletManager.spend(15);
+
+          // Show penalty notification separately
+          const penaltyText = this.scene.add
+            .text(
+              this.scene.scale.width / 2,
+              this.scene.scale.height / 2 - 130,
+              "SECURITY BREACH: -15 CC",
+              {
+                fontSize: "24px",
+                fill: "#ff0000",
+                backgroundColor: "#000000",
+                padding: { x: 10, y: 5 },
+                stroke: "#ffffff",
+                strokeThickness: 2,
+              }
+            )
+            .setOrigin(0.5)
+            .setDepth(1000);
+
+          // Fade out penalty text
+          this.scene.tweens.add({
+            targets: penaltyText,
+            alpha: 0,
+            y: "-=30",
+            duration: 2000,
+            delay: 500,
+            ease: "Power2",
+            onComplete: () => {
+              penaltyText.destroy();
+            },
+          });
+        }
+
         // Message gets corrupted
         this.showResolutionMessage(
           "Message Intercepted!",
