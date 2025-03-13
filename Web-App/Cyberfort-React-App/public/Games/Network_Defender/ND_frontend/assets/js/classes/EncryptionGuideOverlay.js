@@ -7,6 +7,79 @@ class EncryptionGuideOverlay {
     this.currentSlide = 0;
     this.isActive = false;
     this.escKeyListener = null; // Track ESC key listener for cleanup
+
+    // Calculate responsive properties for the guides
+    this.calculateResponsiveProperties();
+
+    // Listen for resize events
+    this.scene.scale.on("resize", this.handleResize, this);
+  }
+
+  // Calculate responsive dimensions and sizes
+  calculateResponsiveProperties() {
+    // Get current screen dimensions
+    this.screenWidth = this.scene.scale.width;
+    this.screenHeight = this.scene.scale.height;
+
+    // Calculate scaling factor - use a more moderate scaling
+    this.scaleFactor = Math.min(
+      Math.max(0.85, this.screenWidth / 1280),
+      Math.max(0.85, this.screenHeight / 720)
+    );
+
+    // Determine if on mobile
+    this.isMobile = this.screenWidth < 768;
+
+    // Calculate slide dimensions (not too small on mobile)
+    // Use percentage of screen width with sensible minimum
+    this.slideWidth = Math.max(500, Math.min(this.screenWidth * 0.85, 800));
+
+    this.slideHeight = Math.max(400, Math.min(this.screenHeight * 0.8, 600));
+
+    // Calculate font sizes with sensible minimums
+    this.titleFontSize = Math.max(24, Math.min(32, 28 * this.scaleFactor));
+    this.contentFontSize = Math.max(18, Math.min(24, 20 * this.scaleFactor));
+    this.buttonFontSize = Math.max(18, Math.min(24, 20 * this.scaleFactor));
+    this.indicatorFontSize = Math.max(16, Math.min(20, 18 * this.scaleFactor));
+    this.hintFontSize = Math.max(14, Math.min(16, 14 * this.scaleFactor));
+    this.tableFontSize = Math.max(16, Math.min(18, 16 * this.scaleFactor));
+    this.tableHeaderFontSize = Math.max(
+      18,
+      Math.min(20, 18 * this.scaleFactor)
+    );
+
+    // Button sizes - ensure they're large enough for touch
+    this.buttonWidth = Math.max(150, Math.min(180, this.slideWidth * 0.25));
+    this.buttonHeight = Math.max(50, Math.min(60, this.slideHeight * 0.1));
+
+    // Table dimensions with minimum sizes
+    this.colWidth = Math.max(130, Math.min(150, this.slideWidth * 0.25));
+    this.rowHeight = Math.max(45, Math.min(50, this.slideHeight * 0.1));
+  }
+
+  // Handle resize events
+  handleResize() {
+    // Recalculate properties
+    this.calculateResponsiveProperties();
+
+    // Refresh slide if tutorial is active
+    if (this.isActive) {
+      this.refreshCurrentSlide();
+    }
+  }
+
+  // Refresh current slide with new dimensions
+  refreshCurrentSlide() {
+    // Store current slide
+    const currentSlideIndex = this.currentSlide;
+
+    // Clear and recreate slide
+    this.clearSlideElements();
+    this.showCurrentSlide();
+
+    // Make sure we're on the same slide
+    this.currentSlide = currentSlideIndex;
+    this.showCurrentSlide();
   }
 
   showTutorial() {
@@ -28,9 +101,6 @@ class EncryptionGuideOverlay {
       // Close the tutorial immediately
       this.closeTutorial();
     });
-
-    // Note: We're no longer adding the ESC hint text here
-    // It's now added in the showCurrentSlide method for better positioning
   }
 
   createTutorialContainer() {
@@ -127,19 +197,36 @@ class EncryptionGuideOverlay {
     // Get current slide content
     const slide = this.slides[this.currentSlide];
 
-    // Create slide background
-    const slideBg = this.scene.add.rectangle(0, 0, 600, 400, 0x001a33, 0.9);
+    // Create slide background with responsive size
+    const slideBg = this.scene.add.rectangle(
+      0,
+      0,
+      this.slideWidth,
+      this.slideHeight,
+      0x001a33,
+      0.9
+    );
     slideBg.setStrokeStyle(2, 0x00aaff);
     this.slideElements.push(slideBg);
 
+    // Calculate header height based on screen size
+    const headerHeight = Math.max(60, Math.min(80, this.slideHeight * 0.15));
+
     // Create header background
-    const headerBg = this.scene.add.rectangle(0, -170, 600, 60, 0x003366, 1);
+    const headerBg = this.scene.add.rectangle(
+      0,
+      -this.slideHeight / 2 + headerHeight / 2,
+      this.slideWidth,
+      headerHeight,
+      0x003366,
+      1
+    );
     this.slideElements.push(headerBg);
 
-    // Create title text
+    // Create title text with responsive font size
     const titleText = this.scene.add
-      .text(0, -170, slide.title, {
-        fontSize: "28px",
+      .text(0, -this.slideHeight / 2 + headerHeight / 2, slide.title, {
+        fontSize: this.titleFontSize + "px",
         fill: "#00ffff",
         fontStyle: "bold",
         align: "center",
@@ -147,14 +234,16 @@ class EncryptionGuideOverlay {
       .setOrigin(0.5);
     this.slideElements.push(titleText);
 
-    // Create content text
+    // Create content text with responsive positioning and font size
+    // For the table slide, position content higher to make room for the table
+    const contentY = slide.table ? -this.slideHeight / 5 : 0;
     const contentText = this.scene.add
-      .text(0, 0, slide.content, {
-        fontSize: "20px",
+      .text(0, contentY, slide.content, {
+        fontSize: this.contentFontSize + "px",
         fill: "#ffffff",
         align: "center",
         lineSpacing: 10,
-        wordWrap: { width: 550 },
+        wordWrap: { width: this.slideWidth - 80 }, // More padding for readability
       })
       .setOrigin(0.5);
     this.slideElements.push(contentText);
@@ -164,33 +253,45 @@ class EncryptionGuideOverlay {
       this.createEncryptionTable();
     }
 
-    // Create navigation buttons
-    const prevButton = this.createButton(-250, 170, "Previous", () =>
-      this.prevSlide()
+    // Calculate button positions based on slide dimensions
+    const buttonY = this.slideHeight / 2 - this.buttonHeight / 2 - 20; // More space at bottom
+    const buttonSpacing = Math.min(this.slideWidth * 0.5, 350); // Not too wide
+
+    // Create navigation buttons with responsive sizing
+    const prevButton = this.createButton(
+      -buttonSpacing / 2,
+      buttonY,
+      "Previous",
+      () => this.prevSlide()
     );
 
     const nextButton = this.createButton(
-      250,
-      170,
+      buttonSpacing / 2,
+      buttonY,
       this.currentSlide === this.slides.length - 1 ? "Finish" : "Next",
       () => this.nextSlide()
     );
 
-    // Add page indicator
+    // Add page indicator with responsive font size
     const pageIndicator = this.scene.add
-      .text(0, 170, `${this.currentSlide + 1}/${this.slides.length}`, {
-        fontSize: "18px",
+      .text(0, buttonY, `${this.currentSlide + 1}/${this.slides.length}`, {
+        fontSize: this.indicatorFontSize + "px",
         fill: "#ffffff",
       })
       .setOrigin(0.5);
     this.slideElements.push(pageIndicator);
 
-    // Add ESC key hint at the top-left corner
+    // Add ESC key hint at the top-left corner with responsive positioning
     const escHint = this.scene.add
-      .text(-290, -190, "Press ESC to exit", {
-        fontSize: "14px",
-        fill: "#aaaaaa",
-      })
+      .text(
+        -this.slideWidth / 2 + 15,
+        -this.slideHeight / 2 + 15,
+        "Press ESC to exit",
+        {
+          fontSize: this.hintFontSize + "px",
+          fill: "#aaaaaa",
+        }
+      )
       .setOrigin(0, 0);
     this.slideElements.push(escHint);
 
@@ -204,7 +305,7 @@ class EncryptionGuideOverlay {
     }
 
     // Entrance animation
-    this.container.setScale(0.9);
+    this.container.setScale(0.95);
     this.container.alpha = 0;
 
     this.scene.tweens.add({
@@ -227,9 +328,9 @@ class EncryptionGuideOverlay {
   }
 
   createButton(x, y, text, callback) {
-    // Create button background
+    // Create button with responsive sizing
     const button = this.scene.add
-      .rectangle(x, y, 160, 50, 0x004466, 1)
+      .rectangle(x, y, this.buttonWidth, this.buttonHeight, 0x004466, 1)
       .setInteractive();
     button.setStrokeStyle(2, 0x00ffff);
     this.slideElements.push(button);
@@ -237,7 +338,7 @@ class EncryptionGuideOverlay {
     // Create button text
     const buttonText = this.scene.add
       .text(x, y, text, {
-        fontSize: "20px",
+        fontSize: this.buttonFontSize + "px",
         fill: "#ffffff",
       })
       .setOrigin(0.5);
@@ -260,18 +361,21 @@ class EncryptionGuideOverlay {
   }
 
   createEncryptionTable() {
-    // Table header
+    // Table header with responsive sizing
     const createTableCell = (x, y, text, isHeader, width, height) => {
       const bg = this.scene.add
         .rectangle(x, y, width, height, isHeader ? 0x00aaff : 0x004466, 1)
         .setStrokeStyle(1, 0xffffff);
 
+      // Ensure text doesn't get cut off or wrap inappropriately
       const textObj = this.scene.add
         .text(x, y, text, {
-          fontSize: isHeader ? "16px" : "14px",
+          fontSize: isHeader
+            ? this.tableHeaderFontSize + "px"
+            : this.tableFontSize + "px",
           fill: "#ffffff",
           align: "center",
-          wordWrap: { width: width - 10 },
+          // Disable wordWrap for table cells to prevent unexpected text wrapping
         })
         .setOrigin(0.5);
 
@@ -279,17 +383,36 @@ class EncryptionGuideOverlay {
       return { bg, textObj };
     };
 
-    // Create table with method comparison
-    const tableY = 10;
-    const colWidth = 130;
-    const rowHeight = 40;
-    const tableX = -colWidth * 1.5;
+    // Create table with responsive sizing and positioning
+    // Calculate the position to be between content text and navigation buttons
 
-    // Header row
-    createTableCell(tableX, tableY - 50, "Method", true, colWidth, rowHeight);
+    // Find where the content ends - usually text has a small padding at the bottom
+    const contentTextBottom = 20; // Approximate content text bottom position
+
+    // Calculate where the buttons start
+    const buttonY = this.slideHeight / 2 - this.buttonHeight / 2 - 20;
+
+    // Position the table between content and buttons
+    // Leave some space after content text and before buttons
+    const availableSpace = buttonY - contentTextBottom;
+    const tableHeight = this.rowHeight * 4; // 4 rows including header
+
+    // Center the table in the available space
+    const tableY = contentTextBottom + (availableSpace - tableHeight) / 2;
+
+    // Adjust column width to ensure it can fit content properly
+    const colWidth = Math.max(this.colWidth, 140);
+    const rowHeight = Math.max(this.rowHeight, 40);
+
+    // Center the table horizontally
+    const tableWidth = colWidth * 3;
+    const tableX = -tableWidth / 2 + colWidth / 2;
+
+    // Table headers - use lighter blue for header
+    createTableCell(tableX, tableY, "Method", true, colWidth, rowHeight);
     createTableCell(
       tableX + colWidth,
-      tableY - 50,
+      tableY,
       "Cost",
       true,
       colWidth,
@@ -297,17 +420,17 @@ class EncryptionGuideOverlay {
     );
     createTableCell(
       tableX + colWidth * 2,
-      tableY - 50,
+      tableY,
       "Security",
       true,
       colWidth,
       rowHeight
     );
 
-    // Data rows - Caesar
+    // Row 1: Caesar
     createTableCell(
       tableX,
-      tableY,
+      tableY + rowHeight,
       "Caesar Cipher",
       false,
       colWidth,
@@ -315,7 +438,7 @@ class EncryptionGuideOverlay {
     );
     createTableCell(
       tableX + colWidth,
-      tableY,
+      tableY + rowHeight,
       "5 CC",
       false,
       colWidth,
@@ -323,17 +446,17 @@ class EncryptionGuideOverlay {
     );
     createTableCell(
       tableX + colWidth * 2,
-      tableY,
+      tableY + rowHeight,
       "Low",
       false,
       colWidth,
       rowHeight
     );
 
-    // Data rows - Auto
+    // Row 2: Automatic
     createTableCell(
       tableX,
-      tableY + rowHeight,
+      tableY + rowHeight * 2,
       "Automatic",
       false,
       colWidth,
@@ -341,7 +464,7 @@ class EncryptionGuideOverlay {
     );
     createTableCell(
       tableX + colWidth,
-      tableY + rowHeight,
+      tableY + rowHeight * 2,
       "20 CC",
       false,
       colWidth,
@@ -349,17 +472,17 @@ class EncryptionGuideOverlay {
     );
     createTableCell(
       tableX + colWidth * 2,
-      tableY + rowHeight,
+      tableY + rowHeight * 2,
       "Medium",
       false,
       colWidth,
       rowHeight
     );
 
-    // Data rows - RSA
+    // Row 3: RSA - ensure text is clear and properly formatted
     createTableCell(
       tableX,
-      tableY + rowHeight * 2,
+      tableY + rowHeight * 3,
       "RSA",
       false,
       colWidth,
@@ -367,7 +490,7 @@ class EncryptionGuideOverlay {
     );
     createTableCell(
       tableX + colWidth,
-      tableY + rowHeight * 2,
+      tableY + rowHeight * 3,
       "15 CC",
       false,
       colWidth,
@@ -375,12 +498,19 @@ class EncryptionGuideOverlay {
     );
     createTableCell(
       tableX + colWidth * 2,
-      tableY + rowHeight * 2,
+      tableY + rowHeight * 3,
       "High",
       false,
       colWidth,
       rowHeight
     );
+  }
+
+  prevSlide() {
+    if (this.currentSlide > 0) {
+      this.currentSlide--;
+      this.showCurrentSlide();
+    }
   }
 
   nextSlide() {
@@ -392,49 +522,57 @@ class EncryptionGuideOverlay {
     }
   }
 
-  prevSlide() {
-    if (this.currentSlide > 0) {
-      this.currentSlide--;
-      this.showCurrentSlide();
-    }
-  }
-
   closeTutorial() {
     if (!this.isActive) return;
 
+    // Closing animation
+    this.scene.tweens.add({
+      targets: this.container,
+      scale: 0.9,
+      alpha: 0,
+      duration: 250,
+      ease: "Back.easeIn",
+      onComplete: () => {
+        // Clean up
+        this.cleanup();
+      },
+    });
+  }
+
+  cleanup() {
     // Remove the ESC key listener
     if (this.escKeyListener) {
-      this.escKeyListener.off("down");
+      this.escKeyListener.removeAllListeners();
       this.scene.input.keyboard.removeKey("ESC");
       this.escKeyListener = null;
     }
 
-    // Fade out animation
-    this.scene.tweens.add({
-      targets: [this.container, this.overlay],
-      alpha: 0,
-      duration: 300,
-      onComplete: () => {
-        // First make sure all children are removed properly
-        this.clearSlideElements();
+    // Destroy all elements
+    this.clearSlideElements();
 
-        // Then destroy the container and overlay
-        if (this.container) {
-          this.container.destroy();
-          this.container = null;
-        }
+    // Destroy container and overlay
+    if (this.container) {
+      this.container.destroy();
+      this.container = null;
+    }
 
-        if (this.overlay) {
-          this.overlay.destroy();
-          this.overlay = null;
-        }
+    if (this.overlay) {
+      this.overlay.destroy();
+      this.overlay = null;
+    }
 
-        this.isActive = false;
+    // Reset state
+    this.currentSlide = 0;
+    this.isActive = false;
+  }
 
-        // Emit event that tutorial is complete
-        this.scene.events.emit("encryptionGuideComplete");
-      },
-    });
+  // Should be called when scene is shut down
+  shutdown() {
+    // Clean up all resources
+    this.cleanup();
+
+    // Remove resize listener
+    this.scene.scale.off("resize", this.handleResize, this);
   }
 }
 

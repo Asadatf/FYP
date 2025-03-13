@@ -37,6 +37,9 @@ class MessageHandler {
     this.userScore = 0;
     this.interceptAnimationGroup = null;
 
+    // Calculate responsive properties
+    this.calculateResponsiveProperties();
+
     this.encryptionAnalysisEndpoint = window.PRODUCTION
       ? "http://localhost:5000/analyze_encryption"
       : "http://localhost:5000/analyze_encryption";
@@ -62,6 +65,64 @@ class MessageHandler {
 
     // Initialize the Man-in-the-Middle attack handler
     this.mitmAttack = new ManInTheMiddleAttack(scene, this);
+  }
+
+  // Calculate responsive properties based on screen size
+  calculateResponsiveProperties() {
+    // Get current screen dimensions
+    this.screenWidth = this.scene.scale.width;
+    this.screenHeight = this.scene.scale.height;
+
+    // Determine if we're on a mobile device
+    this.isMobile = this.screenWidth < 768;
+
+    // Calculate scale factor based on screen dimensions
+    this.scaleFactor = Math.min(
+      this.screenWidth / 1280,
+      this.screenHeight / 720
+    );
+
+    // Scale UI elements based on screen size
+    this.popupScale = this.isMobile ? 0.8 : 1;
+
+    // Font size calculations
+    this.baseFontSize = Math.max(Math.floor(18 * this.scaleFactor), 12);
+    this.headerFontSize = Math.max(Math.floor(24 * this.scaleFactor), 16);
+    this.smallFontSize = Math.max(Math.floor(14 * this.scaleFactor), 10);
+
+    // UI Element dimensions scaled for screen size
+    this.popupWidth = Math.min(this.screenWidth * 0.9, 460 * this.scaleFactor);
+    this.popupHeight = Math.min(
+      this.screenHeight * 0.9,
+      320 * this.scaleFactor
+    );
+
+    // Spacing values
+    this.elementSpacing = 20 * this.scaleFactor;
+  }
+
+  // Handle screen resize events
+  handleResize() {
+    // Recalculate responsive properties
+    this.calculateResponsiveProperties();
+
+    // If a menu is active, reposition and resize it
+    if (this.menuActive && this.menuElements) {
+      this.resizeActivePopup();
+    }
+  }
+
+  // Resize active popup elements
+  resizeActivePopup() {
+    if (!this.menuElements || !this.menuElements.length) return;
+
+    // Close current popup and reopen with new dimensions
+    this.closePopup();
+
+    // If this was a message popup, reopen it
+    if (this.lastMessage) {
+      this.openMessagePopup();
+    }
   }
 
   // RSA
@@ -1083,12 +1144,22 @@ class MessageHandler {
 
   // 3. Add this new method:
   createEncryptionMethodUI() {
+    // Calculate responsive dimensions
+    const popupWidth = Math.min(this.screenWidth * 0.9, 500 * this.scaleFactor);
+    const popupHeight = Math.min(
+      this.screenHeight * 0.9,
+      500 * this.scaleFactor
+    );
+    const buttonWidth = Math.min(popupWidth * 0.8, 320 * this.scaleFactor);
+    const buttonHeight = Math.min(60 * this.scaleFactor, popupHeight * 0.15);
+    const buttonSpacing = Math.min(80 * this.scaleFactor, popupHeight * 0.2);
+
     // Create method selection popup
     this.menuBackground = this.scene.add.rectangle(
       this.scene.scale.width / 2,
       this.scene.scale.height / 2,
-      500,
-      500, // Increased height to accommodate RSA button
+      popupWidth,
+      popupHeight,
       0x000000,
       0.8
     );
@@ -1096,10 +1167,10 @@ class MessageHandler {
     const titleText = this.scene.add
       .text(
         this.scene.scale.width / 2,
-        this.scene.scale.height / 2 - 200,
+        this.scene.scale.height / 2 - popupHeight / 2 + 30 * this.scaleFactor,
         "Choose Encryption Method",
         {
-          fontSize: "24px",
+          fontSize: this.headerFontSize + "px",
           fill: "#ffffff",
           align: "center",
         }
@@ -1110,27 +1181,31 @@ class MessageHandler {
     const balanceText = this.scene.add
       .text(
         this.scene.scale.width / 2,
-        this.scene.scale.height / 2 - 150,
+        this.scene.scale.height / 2 - popupHeight / 2 + 70 * this.scaleFactor,
         `Available: ${this.scene.walletManager.coins} CC`,
         {
-          fontSize: "18px",
+          fontSize: this.baseFontSize + "px",
           fill: "#ffd700",
           align: "center",
         }
       )
       .setOrigin(0.5);
 
-    // Automatic Encryption Button
+    // Automatic Encryption Button - position based on screen size
+    const buttonY1 = this.scene.scale.height / 2 - buttonSpacing;
     const autoEncryptButton = this.scene.add
       .text(
         this.scene.scale.width / 2,
-        this.scene.scale.height / 2 - 80,
+        buttonY1,
         "Automatic Encryption\nCost: 20 CC | Time: 5s",
         {
-          fontSize: "20px",
+          fontSize: this.baseFontSize + "px",
           fill: "#00ff00",
           backgroundColor: "#004400",
-          padding: 10,
+          padding: {
+            x: 10 * this.scaleFactor,
+            y: 10 * this.scaleFactor,
+          },
           align: "center",
         }
       )
@@ -1147,17 +1222,21 @@ class MessageHandler {
         }
       });
 
-    // Manual Encryption Button (Caesar Cipher)
+    // Manual Encryption Button
+    const buttonY2 = this.scene.scale.height / 2;
     const manualEncryptButton = this.scene.add
       .text(
         this.scene.scale.width / 2,
-        this.scene.scale.height / 2,
+        buttonY2,
         "Caesar Cipher (Manual)\nCost: 5 CC | Time: 15s",
         {
-          fontSize: "20px",
+          fontSize: this.baseFontSize + "px",
           fill: "#0000ff",
           backgroundColor: "#000044",
-          padding: 10,
+          padding: {
+            x: 10 * this.scaleFactor,
+            y: 10 * this.scaleFactor,
+          },
           align: "center",
         }
       )
@@ -1176,16 +1255,20 @@ class MessageHandler {
       });
 
     // RSA Encryption Button
+    const buttonY3 = this.scene.scale.height / 2 + buttonSpacing;
     const rsaEncryptButton = this.scene.add
       .text(
         this.scene.scale.width / 2,
-        this.scene.scale.height / 2 + 80,
+        buttonY3,
         "RSA Encryption\nCost: 15 CC | Time: 10s",
         {
-          fontSize: "20px",
+          fontSize: this.baseFontSize + "px",
           fill: "#ff9900",
           backgroundColor: "#663300",
-          padding: 10,
+          padding: {
+            x: 10 * this.scaleFactor,
+            y: 10 * this.scaleFactor,
+          },
           align: "center",
         }
       )
@@ -1197,7 +1280,6 @@ class MessageHandler {
           this.isEncrypting = true;
           this.encryptionMethod = "rsa";
           const firstWord = this.selectedWords[0];
-          // Use the direct visualization method instead of startRSAEncryption
           this.visualizeRSAEncryption(firstWord);
         } else {
           this.showInsufficientFundsError();
@@ -2092,7 +2174,7 @@ class MessageHandler {
       this.menuActive = true;
       this.isSelectingWords = false;
 
-      // Popup Menu setup
+      // Popup Menu setup with responsive dimensions
       // Create a dark overlay for better focus
       this.menuOverlay = this.scene.add
         .rectangle(
@@ -2105,12 +2187,12 @@ class MessageHandler {
         )
         .setOrigin(0, 0);
 
-      // Enhanced popup menu background
+      // Enhanced popup menu background with responsive sizing
       this.menuBackground = this.scene.add.rectangle(
         this.scene.scale.width / 2,
         this.scene.scale.height / 2,
-        460,
-        320,
+        this.popupWidth,
+        this.popupHeight,
         0x000000,
         0.85
       );
@@ -2119,84 +2201,87 @@ class MessageHandler {
       this.menuBorder = this.scene.add.graphics();
       this.menuBorder.lineStyle(2, 0x00ffaa, 0.8);
       this.menuBorder.strokeRect(
-        this.scene.scale.width / 2 - 230,
-        this.scene.scale.height / 2 - 160,
-        460,
-        320
+        this.scene.scale.width / 2 - this.popupWidth / 2,
+        this.scene.scale.height / 2 - this.popupHeight / 2,
+        this.popupWidth,
+        this.popupHeight
       );
 
-      // Add corner accents
+      // Add corner accents with responsive positioning
       this.menuBorder.lineStyle(3, 0x00ffff, 1);
+      const cornerSize = 20 * this.scaleFactor;
+
       // Top-left corner
       this.menuBorder.beginPath();
       this.menuBorder.moveTo(
-        this.scene.scale.width / 2 - 230,
-        this.scene.scale.height / 2 - 140
+        this.scene.scale.width / 2 - this.popupWidth / 2,
+        this.scene.scale.height / 2 - this.popupHeight / 2 + cornerSize
       );
       this.menuBorder.lineTo(
-        this.scene.scale.width / 2 - 230,
-        this.scene.scale.height / 2 - 160
+        this.scene.scale.width / 2 - this.popupWidth / 2,
+        this.scene.scale.height / 2 - this.popupHeight / 2
       );
       this.menuBorder.lineTo(
-        this.scene.scale.width / 2 - 210,
-        this.scene.scale.height / 2 - 160
+        this.scene.scale.width / 2 - this.popupWidth / 2 + cornerSize,
+        this.scene.scale.height / 2 - this.popupHeight / 2
       );
       this.menuBorder.strokePath();
 
       // Top-right corner
       this.menuBorder.beginPath();
       this.menuBorder.moveTo(
-        this.scene.scale.width / 2 + 210,
-        this.scene.scale.height / 2 - 160
+        this.scene.scale.width / 2 + this.popupWidth / 2 - cornerSize,
+        this.scene.scale.height / 2 - this.popupHeight / 2
       );
       this.menuBorder.lineTo(
-        this.scene.scale.width / 2 + 230,
-        this.scene.scale.height / 2 - 160
+        this.scene.scale.width / 2 + this.popupWidth / 2,
+        this.scene.scale.height / 2 - this.popupHeight / 2
       );
       this.menuBorder.lineTo(
-        this.scene.scale.width / 2 + 230,
-        this.scene.scale.height / 2 - 140
+        this.scene.scale.width / 2 + this.popupWidth / 2,
+        this.scene.scale.height / 2 - this.popupHeight / 2 + cornerSize
       );
       this.menuBorder.strokePath();
 
       // Bottom-left corner
       this.menuBorder.beginPath();
       this.menuBorder.moveTo(
-        this.scene.scale.width / 2 - 230,
-        this.scene.scale.height / 2 + 140
+        this.scene.scale.width / 2 - this.popupWidth / 2,
+        this.scene.scale.height / 2 + this.popupHeight / 2 - cornerSize
       );
       this.menuBorder.lineTo(
-        this.scene.scale.width / 2 - 230,
-        this.scene.scale.height / 2 + 160
+        this.scene.scale.width / 2 - this.popupWidth / 2,
+        this.scene.scale.height / 2 + this.popupHeight / 2
       );
       this.menuBorder.lineTo(
-        this.scene.scale.width / 2 - 210,
-        this.scene.scale.height / 2 + 160
+        this.scene.scale.width / 2 - this.popupWidth / 2 + cornerSize,
+        this.scene.scale.height / 2 + this.popupHeight / 2
       );
       this.menuBorder.strokePath();
 
       // Bottom-right corner
       this.menuBorder.beginPath();
       this.menuBorder.moveTo(
-        this.scene.scale.width / 2 + 210,
-        this.scene.scale.height / 2 + 160
+        this.scene.scale.width / 2 + this.popupWidth / 2 - cornerSize,
+        this.scene.scale.height / 2 + this.popupHeight / 2
       );
       this.menuBorder.lineTo(
-        this.scene.scale.width / 2 + 230,
-        this.scene.scale.height / 2 + 160
+        this.scene.scale.width / 2 + this.popupWidth / 2,
+        this.scene.scale.height / 2 + this.popupHeight / 2
       );
       this.menuBorder.lineTo(
-        this.scene.scale.width / 2 + 230,
-        this.scene.scale.height / 2 + 140
+        this.scene.scale.width / 2 + this.popupWidth / 2,
+        this.scene.scale.height / 2 + this.popupHeight / 2 - cornerSize
       );
       this.menuBorder.strokePath();
 
-      // Terminal header bar
+      // Terminal header bar with responsive sizing
+      const headerHeight = 30 * this.scaleFactor;
       this.headerBar = this.scene.add.rectangle(
         this.scene.scale.width / 2,
-        this.scene.scale.height / 2 - 140,
-        458,
-        30,
+        this.scene.scale.height / 2 - this.popupHeight / 2 + headerHeight / 2,
+        this.popupWidth - 2,
+        headerHeight,
         0x001a1a,
         1
       );
@@ -2208,10 +2293,10 @@ class MessageHandler {
       this.menuText = this.scene.add
         .text(
           this.scene.scale.width / 2,
-          this.scene.scale.height / 2 - 100,
+          this.scene.scale.height / 2 - this.popupHeight / 4,
           promptText,
           {
-            fontSize: "24px",
+            fontSize: this.headerFontSize + "px",
             fill: "#ffffff",
             align: "center",
           }
@@ -2220,7 +2305,7 @@ class MessageHandler {
 
       this.messageInput = this.scene.add
         .text(this.scene.scale.width / 2, this.scene.scale.height / 2, "_", {
-          fontSize: "20px",
+          fontSize: this.baseFontSize + "px",
           fill: "#ffffff",
         })
         .setOrigin(0.5);
@@ -2295,6 +2380,7 @@ class MessageHandler {
       ];
     }
   }
+
   startWordSelectionTimer() {
     // Clear any existing timer
     if (this.wordSelectionTimer) {
@@ -2306,14 +2392,14 @@ class MessageHandler {
       this.wordSelectionText.destroy();
     }
 
-    // Create timer text
+    // Create timer text with responsive font size
     this.wordSelectionText = this.scene.add
       .text(
         this.scene.scale.width / 2,
-        this.scene.scale.height / 2 - 150,
+        this.scene.scale.height / 2 - this.popupHeight / 3,
         `Time Remaining: ${this.wordSelectionTimeLimit}`,
         {
-          fontSize: "24px",
+          fontSize: this.headerFontSize + "px",
           fill: "#ffffff",
           backgroundColor: "#000000",
           padding: 10,
@@ -2343,9 +2429,22 @@ class MessageHandler {
   }
   // Update the handleWordSelectionTimeout method
   handleWordSelectionTimeout() {
+    // Only proceed if we're still in word selection mode
+    if (!this.isSelectingWords) return;
+
     // Clear the timer display
     if (this.wordSelectionText) {
       this.wordSelectionText.destroy();
+    }
+
+    // If we already have selected words and the puzzle is shown, don't select more words
+    // This prevents reselection when the puzzle is active
+    if (
+      this.selectedWords.length > 0 &&
+      this.puzzle &&
+      this.puzzle.isSolved()
+    ) {
+      return;
     }
 
     // Hide all word text objects before random selection
@@ -2364,8 +2463,68 @@ class MessageHandler {
 
     // Short delay before showing encryption method selection
     this.scene.time.delayedCall(100, () => {
-      this.showEncryptionMethodSelection();
+      // Close any open word selection popup to prevent UI stacking
+      this.closePopup();
+
+      // Only show encryption method if we have words selected
+      if (this.selectedWords.length > 0) {
+        this.showEncryptionMethodSelection();
+      }
     });
+
+    // Set isSelectingWords to false to prevent further word selection prompts
+    this.isSelectingWords = false;
+  }
+
+  // Also modify handleWordClick to ensure the puzzle logic works correctly
+  handleWordClick(index) {
+    const selectedWord = this.tokenizedMessage[index];
+
+    if (!this.selectedWords.includes(selectedWord)) {
+      if (this.selectedWords.length < 2) {
+        // Highlight the selected word
+        this.wordTextObjects[index].setBackgroundColor("#00ff00");
+        this.selectedWords.push(selectedWord);
+        console.log("Selected word:", selectedWord);
+
+        if (this.selectedWords.length === 2) {
+          // Clear the timer when two words are selected
+          if (this.wordSelectionTimer) {
+            this.wordSelectionTimer.remove();
+            this.wordSelectionTimer = null;
+          }
+          if (this.wordSelectionText) {
+            this.wordSelectionText.destroy();
+            this.wordSelectionText = null;
+          }
+
+          // Set isSelectingWords to false to prevent further word selection
+          this.isSelectingWords = false;
+
+          this.closePopup();
+
+          // Only generate puzzle if we have a valid puzzle object
+          if (this.puzzle) {
+            this.puzzle.generatePuzzle();
+            console.log("Ready to encrypt:", this.selectedWords);
+
+            // Hide word text objects during puzzle
+            this.wordTextObjects.forEach((wordText) =>
+              wordText.setVisible(false)
+            );
+
+            // Set up puzzle solved callback
+            this.puzzle.onSolved(() => {
+              console.log("Puzzle solved!");
+              this.showEncryptionMethodSelection();
+            });
+          } else {
+            // If no puzzle, go straight to encryption method selection
+            this.showEncryptionMethodSelection();
+          }
+        }
+      }
+    }
   }
   selectRandomWords(count) {
     // Get all available words (excluding already selected ones)
@@ -2393,13 +2552,22 @@ class MessageHandler {
     }
 
     // Create a cyberpunk-themed container for our custom speech bubble
-    const bubbleContainer = this.scene.add.container(x, y - 80).setDepth(10);
+    const offsetY = this.scaleFactor * 80;
+    const bubbleContainer = this.scene.add
+      .container(x, y - offsetY)
+      .setDepth(10);
 
-    // Create a custom speech bubble background with hexagonal/terminal style
+    // Create a custom speech bubble background with responsive sizing
     const bubbleBg = this.scene.add.graphics();
-    const bubbleWidth = 320;
-    const bubbleHeight = 160;
-    const cornerSize = 15;
+    const bubbleWidth = Math.min(
+      this.screenWidth * 0.8,
+      320 * this.scaleFactor
+    );
+    const bubbleHeight = Math.min(
+      this.screenHeight * 0.25,
+      160 * this.scaleFactor
+    );
+    const cornerSize = 15 * this.scaleFactor;
 
     // Fill with translucent dark background
     bubbleBg.fillStyle(0x000a14, 0.85);
@@ -2452,14 +2620,22 @@ class MessageHandler {
     bubbleBg.strokePath();
 
     // Add a terminal-style header bar
+    const headerHeight = 30 * this.scaleFactor;
     const headerBg = this.scene.add
-      .rectangle(0, -bubbleHeight / 2 + 15, bubbleWidth - 4, 30, 0x001a1a, 1)
+      .rectangle(
+        0,
+        -bubbleHeight / 2 + headerHeight / 2,
+        bubbleWidth - 4,
+        headerHeight,
+        0x001a1a,
+        1
+      )
       .setStrokeStyle(1, 0x00ffaa);
 
     // Add message source indicator
     const headerText = this.scene.add
-      .text(0, -bubbleHeight / 2 + 15, "DEFENDER: TX", {
-        fontSize: "14px",
+      .text(0, -bubbleHeight / 2 + headerHeight / 2, "DEFENDER: TX", {
+        fontSize: this.smallFontSize + "px",
         fontFamily: "Courier New",
         fill: "#00ffaa",
         align: "center",
@@ -2468,12 +2644,17 @@ class MessageHandler {
 
     // Add a connection strength indicator
     const connectionText = this.scene.add
-      .text(bubbleWidth / 2 - 40, -bubbleHeight / 2 + 15, "SECURE", {
-        fontSize: "11px",
-        fontFamily: "Courier New",
-        fill: "#00ff00",
-        align: "right",
-      })
+      .text(
+        bubbleWidth / 2 - 40 * this.scaleFactor,
+        -bubbleHeight / 2 + headerHeight / 2,
+        "SECURE",
+        {
+          fontSize: this.smallFontSize - 2 + "px",
+          fontFamily: "Courier New",
+          fill: "#00ff00",
+          align: "right",
+        }
+      )
       .setOrigin(0.5);
 
     // Add a triangle pointer at the bottom of the bubble
@@ -2481,9 +2662,9 @@ class MessageHandler {
     pointer.fillStyle(0x000a14, 0.85);
     pointer.lineStyle(2, 0x00ffaa, 0.9);
     pointer.beginPath();
-    pointer.moveTo(-15, bubbleHeight / 2);
-    pointer.lineTo(0, bubbleHeight / 2 + 20);
-    pointer.lineTo(15, bubbleHeight / 2);
+    pointer.moveTo(-15 * this.scaleFactor, bubbleHeight / 2);
+    pointer.lineTo(0, bubbleHeight / 2 + 20 * this.scaleFactor);
+    pointer.lineTo(15 * this.scaleFactor, bubbleHeight / 2);
     pointer.closePath();
     pointer.fillPath();
     pointer.strokePath();
@@ -2491,7 +2672,7 @@ class MessageHandler {
     // Add the text with better wrapping and style
     const bubbleText = this.scene.add
       .text(0, 5, message, {
-        fontSize: "18px",
+        fontSize: this.baseFontSize + "px",
         fontFamily: "Courier New",
         fill: "#ffffff",
         stroke: "#00332a",
@@ -2505,7 +2686,11 @@ class MessageHandler {
     // Add scan lines overlay effect (subtle)
     const scanLines = this.scene.add.graphics();
     scanLines.lineStyle(1, 0x00ffaa, 0.1);
-    for (let i = -bubbleHeight / 2 + 30; i < bubbleHeight / 2; i += 4) {
+    for (
+      let i = -bubbleHeight / 2 + headerHeight;
+      i < bubbleHeight / 2;
+      i += 4 * this.scaleFactor
+    ) {
       scanLines.beginPath();
       scanLines.moveTo(-bubbleWidth / 2 + 5, i);
       scanLines.lineTo(bubbleWidth / 2 - 5, i);
@@ -2517,9 +2702,10 @@ class MessageHandler {
     bubbleText.setText("");
     let currentCharacter = 0;
 
-    // Create typing timer
+    // Create typing timer - adjust speed based on message length
+    const charDelay = Math.max(10, Math.min(30, 1000 / fullText.length));
     const typingTimer = this.scene.time.addEvent({
-      delay: 20,
+      delay: charDelay,
       repeat: fullText.length - 1,
       callback: () => {
         bubbleText.text += fullText[currentCharacter];
@@ -2545,7 +2731,7 @@ class MessageHandler {
     this.scene.tweens.add({
       targets: bubbleContainer,
       alpha: 1,
-      y: y - 70, // Slight upward animation
+      y: y - offsetY + 10 * this.scaleFactor, // Slight upward animation
       duration: 500,
       ease: "Back.easeOut",
     });
@@ -2553,7 +2739,7 @@ class MessageHandler {
     // Add subtle floating animation
     this.scene.tweens.add({
       targets: bubbleContainer,
-      y: "-=5",
+      y: "-=" + 5 * this.scaleFactor,
       duration: 2000,
       yoyo: true,
       repeat: 1,
@@ -2561,11 +2747,12 @@ class MessageHandler {
     });
 
     // Automatically remove the speech bubble after a delay
-    this.scene.time.delayedCall(5000, () => {
+    const displayTime = Math.max(5000, message.length * 100); // Longer messages stay longer
+    this.scene.time.delayedCall(displayTime, () => {
       this.scene.tweens.add({
         targets: bubbleContainer,
         alpha: 0,
-        y: "-=30",
+        y: "-=" + 30 * this.scaleFactor,
         duration: 700,
         ease: "Power2",
         onComplete: () => {
@@ -2642,6 +2829,7 @@ class MessageHandler {
     this.menuActive = false;
   }
 
+  // Updated to handle different screen sizes
   displayTokenizedMessage(tokenizedMessage) {
     // Clear any previous word text objects
     this.wordTextObjects.forEach((wordText) => wordText.destroy());
@@ -2650,32 +2838,82 @@ class MessageHandler {
     // Calculate starting position within the popup
     const popupCenterX = this.scene.scale.width / 2;
     const popupCenterY = this.scene.scale.height / 2;
-    const wordSpacing = 100; // Space between words
-    const startX =
-      popupCenterX - ((tokenizedMessage.length - 1) * wordSpacing) / 2;
 
-    this.wordTextObjects = tokenizedMessage.map((word, index) => {
-      const wordText = this.scene.add
-        .text(
-          startX + index * wordSpacing,
-          popupCenterY + 50, // Position below the prompt text
-          word,
-          {
-            font: "20px Arial",
+    // Calculate word spacing based on screen size and number of words
+    const availableWidth = this.popupWidth - 40;
+    const wordCount = tokenizedMessage.length;
+    let wordSpacing = Math.min(
+      100 * this.scaleFactor,
+      availableWidth / (wordCount + 0.5)
+    );
+
+    // Adjust for mobile screens with many words
+    if (this.isMobile && wordCount > 3) {
+      // For mobile with many words, use a multi-row layout
+      const wordsPerRow = Math.min(
+        3,
+        Math.floor(availableWidth / (wordSpacing * 0.8))
+      );
+      const rows = Math.ceil(wordCount / wordsPerRow);
+
+      tokenizedMessage.forEach((word, index) => {
+        const row = Math.floor(index / wordsPerRow);
+        const col = index % wordsPerRow;
+
+        const x = popupCenterX + (col - (wordsPerRow - 1) / 2) * wordSpacing;
+        const y =
+          popupCenterY + 40 * this.scaleFactor + row * 40 * this.scaleFactor;
+
+        const wordText = this.scene.add
+          .text(x, y, word, {
+            font: this.baseFontSize + "px Arial",
             fill: "#ffffff",
             backgroundColor: "#000000",
-            padding: 5,
-          }
-        )
-        .setOrigin(0.5)
-        .setDepth(2)
-        .setInteractive();
+            padding: {
+              x: 5 * this.scaleFactor,
+              y: 5 * this.scaleFactor,
+            },
+          })
+          .setOrigin(0.5)
+          .setDepth(2)
+          .setInteractive();
 
-      // Add click event for word selection
-      wordText.on("pointerdown", () => this.handleWordClick(index));
+        // Add click event for word selection
+        wordText.on("pointerdown", () => this.handleWordClick(index));
 
-      return wordText;
-    });
+        this.wordTextObjects.push(wordText);
+      });
+    } else {
+      // For fewer words or larger screens, use a single row
+      const startX =
+        popupCenterX - ((tokenizedMessage.length - 1) * wordSpacing) / 2;
+
+      this.wordTextObjects = tokenizedMessage.map((word, index) => {
+        const wordText = this.scene.add
+          .text(
+            startX + index * wordSpacing,
+            popupCenterY + 50 * this.scaleFactor, // Position below the prompt text
+            word,
+            {
+              font: this.baseFontSize + "px Arial",
+              fill: "#ffffff",
+              backgroundColor: "#000000",
+              padding: {
+                x: 5 * this.scaleFactor,
+                y: 5 * this.scaleFactor,
+              },
+            }
+          )
+          .setOrigin(0.5)
+          .setDepth(2)
+          .setInteractive();
+
+        // Add click event for word selection
+        wordText.on("pointerdown", () => this.handleWordClick(index));
+
+        return wordText;
+      });
+    }
   }
 
   handleWordClick(index) {
