@@ -133,6 +133,5 @@ dist
 .vscode
 
 # Games Backend
-Games/Network_Defender/ND_backend/
-Games/Phishing_game/Backend/
-Games/Phishing_game_Latest/Backend/
+Web-App/Cyberfort-React-App/public/Games/Network_Defender/ND_Backend
+
