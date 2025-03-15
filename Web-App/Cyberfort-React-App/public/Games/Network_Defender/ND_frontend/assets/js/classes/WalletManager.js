@@ -151,28 +151,34 @@ class WalletManager {
     this.coins += amount;
     this.updateDisplay();
 
-    // Create bonus effect with responsive sizing
-    // Calculate position based on wallet container
-    const effectX = this.walletX + this.containerWidth / 2;
-    const effectY = this.walletY + this.containerHeight / 2;
-
-    // Create text with responsive font size
+    // Create bonus effect
     const bonusText = this.scene.add
-      .text(effectX, effectY, `+${amount} CC`, {
-        fontSize: Math.max(24 * this.scaleFactor, 16) + "px",
-        fill: "#00ff00",
-        stroke: "#000000",
-        strokeThickness: 4,
-      })
-      .setOrigin(0.5)
-      .setDepth(101);
+      .text(
+        this.walletContainer.x + 100,
+        this.walletContainer.y + 20,
+        `+${amount} CC`,
+        {
+          fontSize: "24px",
+          fill: "#00ff00",
+          stroke: "#000000",
+          strokeThickness: 4,
+        }
+      )
+      .setOrigin(0.5);
 
-    // Animate with responsive distance
+    // If there is a score manager, add time bonus
+    if (this.scene.scoreManager && this.scene.timeManager) {
+      const remainingSeconds = Math.ceil(
+        this.scene.timeManager.timeRemaining / 1000
+      );
+      this.scene.scoreManager.addScore("timeBonus", amount * 5); // Convert coin bonus to score points
+    }
+
     this.scene.tweens.add({
       targets: bonusText,
       alpha: 0,
-      y: effectY - this.animationDistance,
-      duration: this.animationDuration,
+      y: "-=30",
+      duration: 1000,
       ease: "Power2",
       onComplete: () => bonusText.destroy(),
     });

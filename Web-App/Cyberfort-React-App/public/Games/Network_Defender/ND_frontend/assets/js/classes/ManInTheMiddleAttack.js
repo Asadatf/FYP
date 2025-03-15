@@ -329,6 +329,9 @@ class ManInTheMiddleAttack {
 
         // Add firewall effect animation
         this.createFirewallEffect();
+
+        // Emit attack prevented event for scoring
+        this.scene.events.emit("attackPrevented");
       } else {
         // Not enough coins, attack proceeds
         this.showResolutionMessage(
@@ -394,6 +397,8 @@ class ManInTheMiddleAttack {
           "#ff0000",
           true
         );
+
+        this.scene.events.emit("attackFailed");
       } else {
         // Attack fails by chance
         this.showResolutionMessage(
@@ -402,6 +407,9 @@ class ManInTheMiddleAttack {
           "#ffff00",
           false
         );
+
+        // Emit attack prevented event for scoring
+        this.scene.events.emit("attackPrevented");
       }
     }
   }

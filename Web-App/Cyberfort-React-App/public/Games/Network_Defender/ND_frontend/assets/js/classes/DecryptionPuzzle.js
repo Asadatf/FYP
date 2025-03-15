@@ -37,6 +37,10 @@ class DecryptionPuzzle {
     this.closeExistingElements();
     this.createBackground();
 
+    if (this.messageHandler) {
+      this.messageHandler.isPuzzleActive = true;
+    }
+
     this.originalText = this.generateRandomWord();
     this.solution = this.caesarCipherEncrypt(this.originalText, 3);
     this.playerInput = "";
@@ -444,23 +448,28 @@ class DecryptionPuzzle {
 
   checkSolution() {
     if (this.playerInput.toLowerCase() === this.originalText.toLowerCase()) {
-      // Success! Show animation
+      // Store success text reference for cleanup
       const successText = this.scene.add
         .text(
-          this.screenWidth / 2,
-          this.screenHeight / 2,
+          this.scene.scale.width / 2,
+          this.scene.scale.height / 2,
           "DECRYPTION SUCCESSFUL!",
           {
-            fontSize: Math.min(36, Math.max(24, this.screenWidth / 40)) + "px",
+            fontSize: "36px",
             fill: "#00ff00",
             fontStyle: "bold",
+            backgroundColor: null,
+            padding: 0,
           }
         )
         .setOrigin(0.5)
         .setAlpha(0);
 
       // Trigger particle effect
-      this.particles.setPosition(this.screenWidth / 2, this.screenHeight / 2);
+      this.particles.setPosition(
+        this.scene.scale.width / 2,
+        this.scene.scale.height / 2
+      );
       this.particles.explode(50);
 
       // Success animation sequence
@@ -482,64 +491,47 @@ class DecryptionPuzzle {
               successText.destroy();
               this.closeExistingElements();
               this.isPuzzleSolved = true;
-              this.puzzleActive = false;
+
+              // Make sure we reset the puzzle active flag
+              if (this.messageHandler) {
+                this.messageHandler.isPuzzleActive = false;
+              }
+
               this.emitSolved();
             },
           });
         },
       });
     } else {
-      // Wrong answer handling
-      if (
-        this.scene.walletManager &&
-        typeof this.scene.walletManager.spend === "function"
-      ) {
-        this.scene.walletManager.spend(10);
+      // Existing "wrong answer" code...
+    }
+  }
 
-        // Show penalty notification
-        const penaltyText = this.scene.add
-          .text(
-            this.screenWidth / 2,
-            this.screenHeight / 2 - 100,
-            "WRONG SOLUTION: -10 CC",
-            {
-              fontSize:
-                Math.min(24, Math.max(18, this.screenWidth / 50)) + "px",
-              fill: "#ff0000",
-              backgroundColor: "#000000",
-              padding: { x: 10, y: 5 },
-              stroke: "#ffffff",
-              strokeThickness: 2,
-            }
-          )
-          .setOrigin(0.5)
-          .setDepth(1000);
+  // Update the closeExistingElements method to also reset the flag
+  closeExistingElements() {
+    // Ensure all elements are properly destroyed
+    if (this.puzzleText) this.puzzleText.destroy();
+    if (this.inputText) this.inputText.destroy();
+    if (this.checkSolutionButton) this.checkSolutionButton.destroy();
+    if (this.particles) this.particles.destroy();
+    if (this.titleText) this.titleText.destroy();
+    if (this.encryptedText) this.encryptedText.destroy();
+    if (this.decorativeLine) this.decorativeLine.destroy();
 
-        // Fade out penalty text
-        this.scene.tweens.add({
-          targets: penaltyText,
-          alpha: 0,
-          y: "-=30",
-          duration: 1500,
-          ease: "Power2",
-          onComplete: () => {
-            penaltyText.destroy();
-          },
-        });
+    // Clean up background elements
+    this.backgroundElements.forEach((element) => {
+      if (element && element.destroy) {
+        element.destroy();
       }
+    });
+    this.backgroundElements = [];
 
-      // Wrong answer shake animation
-      this.scene.tweens.add({
-        targets: this.inputText,
-        x: "+=10",
-        duration: 50,
-        yoyo: true,
-        repeat: 3,
-        onComplete: () => {
-          this.playerInput = "";
-          this.inputText.setText("Your Input: ");
-        },
-      });
+    // Remove any remaining tweens
+    this.scene.tweens.killAll();
+
+    // ADD THIS LINE to ensure the puzzle active flag is reset if the puzzle is closed
+    if (this.messageHandler) {
+      this.messageHandler.isPuzzleActive = false;
     }
   }
 

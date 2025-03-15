@@ -19,6 +19,8 @@ class Defender extends Phaser.Physics.Arcade.Image {
     // Apply responsive scaling
     this.setScale(this.defenderScale);
 
+    this.body.setSize(this.width * 0.6, this.height * 0.6);
+    this.body.setOffset(this.width * 0.2, this.height * 0.2);
     // Collide with world bounds, prevent from leaving world
     this.setCollideWorldBounds(true);
 

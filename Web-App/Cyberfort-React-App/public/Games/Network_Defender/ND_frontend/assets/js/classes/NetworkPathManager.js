@@ -165,6 +165,10 @@ class NetworkPathManager {
       console.log("Path is valid! Router and both switches configured.");
       this.highlightValidPath();
       this.createSuccessParticles();
+
+      // Emit network complete event for scoring
+      this.scene.events.emit("networkComplete");
+
       return true;
     } else {
       // Show which devices still need configuration
@@ -804,6 +808,9 @@ class NetworkPathManager {
       } catch (e) {
         console.log("Sound not available");
       }
+
+      // Emit device configured event for scoring
+      this.scene.events.emit("deviceConfigured", this.currentDeviceType);
 
       // Show success message before closing popup
       this.showResponseMessage("IP Configuration Successful", "#00ff00", true);

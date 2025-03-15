@@ -54,6 +54,13 @@ class MessageHandler {
 
     // Puzzle
     this.puzzle = puzzle;
+    // Add reference to MessageHandler in the puzzle
+    if (this.puzzle) {
+      this.puzzle.messageHandler = this;
+    }
+
+    // Initialize isPuzzleActive flag
+    this.isPuzzleActive = false;
 
     // Game over vars
     this.isTerminating = false;
@@ -1117,6 +1124,12 @@ class MessageHandler {
 
   // 2. Modify the showEncryptionMethodSelection method to check for attacks:
   showEncryptionMethodSelection() {
+    // If puzzle is active, don't show the encryption method selection
+    if (this.isPuzzleActive) {
+      console.log("Puzzle is active, not showing encryption methods");
+      return;
+    }
+
     // Close any existing popups first
     this.closePopup();
 
@@ -1885,6 +1898,14 @@ class MessageHandler {
                         this.lastMessage,
                         this.encryptedMessage
                       );
+
+                      // Emit encryptionComplete event for scoring
+                      const securityScore = this.securityScore || 50; // Default if not set
+                      this.scene.events.emit(
+                        "encryptionComplete",
+                        this.encryptionMethod,
+                        securityScore
+                      );
                     },
                   });
                 },
@@ -2392,14 +2413,14 @@ class MessageHandler {
       this.wordSelectionText.destroy();
     }
 
-    // Create timer text with responsive font size
+    // Create timer text
     this.wordSelectionText = this.scene.add
       .text(
         this.scene.scale.width / 2,
-        this.scene.scale.height / 2 - this.popupHeight / 3,
+        this.scene.scale.height / 2 - 150,
         `Time Remaining: ${this.wordSelectionTimeLimit}`,
         {
-          fontSize: this.headerFontSize + "px",
+          fontSize: "24px",
           fill: "#ffffff",
           backgroundColor: "#000000",
           padding: 10,
@@ -2412,6 +2433,16 @@ class MessageHandler {
       delay: 1000,
       repeat: this.wordSelectionTimeLimit - 1,
       callback: () => {
+        // ADD THIS CHECK to prevent timer from interfering with puzzle
+        if (this.isPuzzleActive) {
+          // If puzzle is active, destroy timer and text
+          this.wordSelectionTimer.remove();
+          this.wordSelectionTimer = null;
+          this.wordSelectionText.destroy();
+          this.wordSelectionText = null;
+          return;
+        }
+
         const timeRemaining = this.wordSelectionTimer.getRepeatCount();
         this.wordSelectionText.setText(`Time Remaining: ${timeRemaining}`);
 
@@ -2427,24 +2458,15 @@ class MessageHandler {
       },
     });
   }
-  // Update the handleWordSelectionTimeout method
   handleWordSelectionTimeout() {
-    // Only proceed if we're still in word selection mode
-    if (!this.isSelectingWords) return;
+    // If the puzzle is active, don't proceed with word selection timeout
+    if (this.isPuzzleActive) {
+      return;
+    }
 
     // Clear the timer display
     if (this.wordSelectionText) {
       this.wordSelectionText.destroy();
-    }
-
-    // If we already have selected words and the puzzle is shown, don't select more words
-    // This prevents reselection when the puzzle is active
-    if (
-      this.selectedWords.length > 0 &&
-      this.puzzle &&
-      this.puzzle.isSolved()
-    ) {
-      return;
     }
 
     // Hide all word text objects before random selection
@@ -2463,17 +2485,8 @@ class MessageHandler {
 
     // Short delay before showing encryption method selection
     this.scene.time.delayedCall(100, () => {
-      // Close any open word selection popup to prevent UI stacking
-      this.closePopup();
-
-      // Only show encryption method if we have words selected
-      if (this.selectedWords.length > 0) {
-        this.showEncryptionMethodSelection();
-      }
+      this.showEncryptionMethodSelection();
     });
-
-    // Set isSelectingWords to false to prevent further word selection prompts
-    this.isSelectingWords = false;
   }
 
   // Also modify handleWordClick to ensure the puzzle logic works correctly
@@ -2497,31 +2510,23 @@ class MessageHandler {
             this.wordSelectionText.destroy();
             this.wordSelectionText = null;
           }
-
-          // Set isSelectingWords to false to prevent further word selection
-          this.isSelectingWords = false;
-
           this.closePopup();
 
-          // Only generate puzzle if we have a valid puzzle object
-          if (this.puzzle) {
-            this.puzzle.generatePuzzle();
-            console.log("Ready to encrypt:", this.selectedWords);
+          // ADD THIS FLAG to indicate puzzle is active
+          this.isPuzzleActive = true;
 
-            // Hide word text objects during puzzle
-            this.wordTextObjects.forEach((wordText) =>
-              wordText.setVisible(false)
-            );
+          this.puzzle.generatePuzzle();
+          console.log("Ready to encrypt:", this.selectedWords);
+          this.wordTextObjects.forEach((wordText) =>
+            wordText.setVisible(false)
+          );
 
-            // Set up puzzle solved callback
-            this.puzzle.onSolved(() => {
-              console.log("Puzzle solved!");
-              this.showEncryptionMethodSelection();
-            });
-          } else {
-            // If no puzzle, go straight to encryption method selection
+          // Update the onSolved callback to reset the flag
+          this.puzzle.onSolved(() => {
+            console.log("Puzzle solved!");
+            this.isPuzzleActive = false; // Reset the flag when puzzle is solved
             this.showEncryptionMethodSelection();
-          }
+          });
         }
       }
     }

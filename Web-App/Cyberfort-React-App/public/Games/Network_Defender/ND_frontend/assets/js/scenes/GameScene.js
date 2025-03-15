@@ -98,6 +98,12 @@ class GameScene extends Phaser.Scene {
     this.timeManager = new TimeManager(this);
     this.walletManager = new WalletManager(this);
 
+    this.scoreManager = new ScoreManager(this);
+    this.highScoreManager = new HighScoreManager(this);
+
+    this.achievementTracker = new AchievementTracker(this);
+    this.createAchievementsButton();
+
     this.createVisualEffects();
 
     // Creating Defender with responsive positioning
@@ -245,6 +251,66 @@ class GameScene extends Phaser.Scene {
 
     // Setup resize handler for responsiveness
     this.scale.on("resize", this.handleResize, this);
+  }
+
+  createAchievementsButton() {
+    // Create achievements button - align with other UI buttons
+    const buttonX = this.scale.width - 80;
+    const buttonY = 320; // Position below other buttons
+
+    // Create button container
+    const achievementsButton = this.add
+      .container(buttonX, buttonY)
+      .setDepth(101);
+
+    // Button background
+    const buttonBg = this.add
+      .rectangle(0, 0, 60, 60, 0x331100, 0.8)
+      .setStrokeStyle(2, 0xffcc00)
+      .setInteractive();
+
+    // Trophy icon
+    const trophyIcon = this.add
+      .text(0, -10, "🏆", { fontSize: "28px" })
+      .setOrigin(0.5);
+
+    // Button label
+    const buttonLabel = this.add
+      .text(0, 20, "Achievements", {
+        fontSize: "12px",
+        fill: "#ffcc00",
+      })
+      .setOrigin(0.5);
+
+    // Add elements to container
+    achievementsButton.add([buttonBg, trophyIcon, buttonLabel]);
+
+    // Add hover effects
+    buttonBg
+      .on("pointerover", () => {
+        buttonBg.fillColor = 0x663300;
+        trophyIcon.setScale(1.1);
+      })
+      .on("pointerout", () => {
+        buttonBg.fillColor = 0x331100;
+        trophyIcon.setScale(1);
+      })
+      .on("pointerdown", () => {
+        // Show achievements menu
+        if (this.achievementTracker) {
+          this.achievementTracker.showAchievementsMenu();
+        }
+      });
+
+    // Add a pulse animation to draw attention
+    this.tweens.add({
+      targets: trophyIcon,
+      scale: { from: 1, to: 1.2 },
+      duration: 1000,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut",
+    });
   }
 
   initializeUIButtons() {
@@ -1177,6 +1243,8 @@ class GameScene extends Phaser.Scene {
       )
       .setOrigin(0.5);
 
+    this.events.emit("gameOver");
+
     // Shake camera
     this.cameras.main.shake(500, 0.05);
 
@@ -1499,6 +1567,8 @@ class GameScene extends Phaser.Scene {
   // Add this to your GameScene.js file
 
   // Update method to handle responsiveness during gameplay
+  // In GameScene.js, replace the entire obstacle checking section in the update() method with this improved version:
+
   update() {
     this.defender.update(this.keys, this.MessageHandler.menuActive);
 
@@ -1511,11 +1581,13 @@ class GameScene extends Phaser.Scene {
     let nearestObstacle = null;
     let minDistance = Infinity;
 
-    // Adjust detection distance based on screen size
-    const detectionRadius = this.isMobile ? 80 : 100;
-
     // Find the nearest obstacle and check if player is near any obstacle
     this.obstacles.children.iterate((obstacle) => {
+      // Calculate the interaction distance dynamically based on sprite sizes
+      // This takes into account both the defender and device sizes
+      const interactionDistance =
+        this.defender.width * 0.5 + obstacle.width * 0.5 + 10; // Added a small buffer
+
       const distance = Phaser.Math.Distance.Between(
         this.defender.x,
         this.defender.y,
@@ -1523,7 +1595,7 @@ class GameScene extends Phaser.Scene {
         obstacle.y
       );
 
-      if (distance < detectionRadius) {
+      if (distance < interactionDistance) {
         this.nearObstacle = true;
 
         // Track the nearest obstacle
@@ -1536,15 +1608,11 @@ class GameScene extends Phaser.Scene {
 
     // Show interaction prompt when near an obstacle
     if (this.nearObstacle && !this.MessageHandler.menuActive) {
-      // Position the prompt near the player and obstacle
+      // Position the prompt near the nearest obstacle
       this.interactText.setPosition(
         nearestObstacle ? nearestObstacle.x : this.defender.x,
-        (nearestObstacle ? nearestObstacle.y : this.defender.y) -
-          50 * this.scaleFactor
+        (nearestObstacle ? nearestObstacle.y : this.defender.y) - 50
       );
-
-      // Update font size based on screen size
-      this.interactText.setFontSize(this.calculateFontSize(24));
 
       // Check if the device is already configured
       const isConfigured =
@@ -1566,8 +1634,43 @@ class GameScene extends Phaser.Scene {
       }
 
       this.interactText.setVisible(true);
+
+      // Create or update a highlight circle around the nearest device
+      if (!this.interactionHighlight) {
+        this.interactionHighlight = this.add
+          .circle(
+            nearestObstacle.x,
+            nearestObstacle.y,
+            nearestObstacle.width * 0.7,
+            0x00ff00,
+            0.3
+          )
+          .setDepth(5);
+
+        // Add pulsing animation
+        this.tweens.add({
+          targets: this.interactionHighlight,
+          alpha: { from: 0.3, to: 0.6 },
+          scale: { from: 1, to: 1.2 },
+          duration: 800,
+          yoyo: true,
+          repeat: -1,
+        });
+      } else {
+        // Update position if highlight already exists
+        this.interactionHighlight.setPosition(
+          nearestObstacle.x,
+          nearestObstacle.y
+        );
+        this.interactionHighlight.setVisible(true);
+      }
     } else {
       this.interactText.setVisible(false);
+
+      // Hide highlight when not near any device
+      if (this.interactionHighlight) {
+        this.interactionHighlight.setVisible(false);
+      }
     }
 
     // Show the context-specific menu when E is pressed near an obstacle

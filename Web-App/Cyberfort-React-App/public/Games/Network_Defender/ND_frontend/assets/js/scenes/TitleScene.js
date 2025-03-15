@@ -90,6 +90,7 @@ class TitleScene extends Phaser.Scene {
 
     // Buttons with enhanced styling
     this.createButtons();
+    this.createHighScoresButton();
   }
 
   handleResize(gameSize) {
@@ -438,6 +439,42 @@ class TitleScene extends Phaser.Scene {
       this.tutorialButton,
       this.instructionsButton,
     ];
+  }
+
+  createHighScoresButton() {
+    // High Scores button
+    this.highScoresButton = new UiButton(
+      this,
+      this.scale.width / 2,
+      this.scale.height * 0.95,
+      "button1",
+      "button2",
+      "High Scores",
+      () => {
+        this.clickSound.play();
+
+        // Initialize high score manager if needed
+        if (!this.highScoreManager) {
+          this.highScoreManager = new HighScoreManager(this);
+        }
+
+        // Show high scores table
+        this.highScoreManager.showHighScoreTable();
+      }
+    );
+
+    // Add entrance animation
+    this.highScoresButton.y += 20;
+    this.highScoresButton.alpha = 0;
+
+    this.tweens.add({
+      targets: this.highScoresButton,
+      y: this.highScoresButton.y - 20,
+      alpha: 1,
+      duration: 500,
+      delay: 300 + 4 * 150, // After other buttons
+      ease: "Back.easeOut",
+    });
   }
 
   // Method to reposition buttons when screen is resized
