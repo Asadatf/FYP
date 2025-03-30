@@ -1,4 +1,7 @@
-const API_URL = "http://localhost:3000/api";
+const API_URL =
+  window.location.hostname === "localhost"
+    ? "http://localhost:3000/api"
+    : "/api"; // Relative path for production
 // Fallback configuration that will work without external assets
 const config = {
   type: Phaser.AUTO,
@@ -113,15 +116,19 @@ async function spawnMessage(scene) {
   } catch (error) {
     console.error("Error fetching message:", error);
     // Fallback to local message generation
-    const messageData = {
-      text: "This is a test message\n" + Math.random().toFixed(5),
-      isPhishing: Math.random() > 0.5,
-      type: "email",
-    };
-    const x = Phaser.Math.Between(100, 700);
-    const message = new Message(scene, x, -50, messageData);
-    messages.push(message);
+    useFallbackMessage(scene);
   }
+}
+
+function useFallbackMessage(scene) {
+  const messageData = {
+    text: "This is a test message\n" + Math.random().toFixed(5),
+    isPhishing: Math.random() > 0.5,
+    type: "email",
+  };
+  const x = Phaser.Math.Between(100, 700);
+  const message = new Message(scene, x, -50, messageData);
+  messages.push(message);
 }
 
 function updateTimer(scene) {
