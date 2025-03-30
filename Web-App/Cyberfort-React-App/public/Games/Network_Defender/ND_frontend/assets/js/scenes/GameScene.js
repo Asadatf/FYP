@@ -119,13 +119,13 @@ class GameScene extends Phaser.Scene {
 
     // Creating Receiver with responsive positioning
     const receiverPos = this.devicePositions.receiver;
-    const receiverOffset = this.deviceSpacing * 0.6; // Adjust based on screen size
+    const receiverOffset = this.deviceSpacing * 2; // Adjust based on screen size
 
     // Position receiver farther from the switch
     this.receiver = new Receiver(
       this,
       receiverPos.x + receiverOffset,
-      receiverPos.y,
+      receiverPos.y + 100,
       "receiver"
     );
     this.receiver.setScale(this.characterScale); // Use character scale instead of device scale
@@ -254,11 +254,18 @@ class GameScene extends Phaser.Scene {
   }
 
   createAchievementsButton() {
-    // Create achievements button - align with other UI buttons
-    const buttonX = this.scale.width - 80;
-    const buttonY = 320; // Position below other buttons
+    // Calculate responsive sizes - use the same calculations as in initializeUIButtons
+    const scaleFactor = Math.min(
+      this.scale.width / 1280,
+      this.scale.height / 720
+    );
+    const isMobile = this.scale.width < 768;
 
-    // Create button container
+    // Use the position of the encryption guide button and add an additional buttonSpacing
+    const buttonX = this.uiButtonX;
+    const buttonY = 50 * scaleFactor + this.buttonSpacing * 3; // Position below encryption guide button
+
+    // Create achievements button container
     const achievementsButton = this.add
       .container(buttonX, buttonY)
       .setDepth(101);
@@ -311,6 +318,9 @@ class GameScene extends Phaser.Scene {
       repeat: -1,
       ease: "Sine.easeInOut",
     });
+
+    // Store reference to update in handleUIButtonsResize
+    this.achievementsButtonContainer = achievementsButton;
   }
 
   initializeUIButtons() {
@@ -350,6 +360,7 @@ class GameScene extends Phaser.Scene {
     this.scale.on("resize", this.handleUIButtonsResize, this);
   }
 
+  // Handle resize for all UI buttons
   // Handle resize for all UI buttons
   handleUIButtonsResize() {
     // Recalculate responsive sizes
@@ -394,6 +405,15 @@ class GameScene extends Phaser.Scene {
           encryptY + 25 * scaleFactor
         );
       }
+    }
+
+    // Update achievements button position
+    if (this.achievementsButtonContainer) {
+      const achievementsY = 50 * scaleFactor + this.buttonSpacing * 3;
+      this.achievementsButtonContainer.setPosition(
+        this.uiButtonX,
+        achievementsY
+      );
     }
   }
 

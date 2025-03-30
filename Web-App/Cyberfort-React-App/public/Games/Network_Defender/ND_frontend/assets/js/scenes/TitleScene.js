@@ -90,7 +90,8 @@ class TitleScene extends Phaser.Scene {
 
     // Buttons with enhanced styling
     this.createButtons();
-    this.createHighScoresButton();
+
+    // Note: The createHighScoresButton() call is removed since it's now part of createButtons()
   }
 
   handleResize(gameSize) {
@@ -414,11 +415,34 @@ class TitleScene extends Phaser.Scene {
     );
     this.instructionsButton.setScale(buttonScale);
 
+    // High Scores button - now added here instead of in a separate method
+    this.highScoresButton = new UiButton(
+      this,
+      this.screenWidth / 2,
+      startY + buttonSpacing * 3, // Position it directly below instructions button
+      "button1",
+      "button2",
+      "High Scores",
+      () => {
+        this.clickSound.play();
+
+        // Initialize high score manager if needed
+        if (!this.highScoreManager) {
+          this.highScoreManager = new HighScoreManager(this);
+        }
+
+        // Show high scores table
+        this.highScoreManager.showHighScoreTable();
+      }
+    );
+    this.highScoresButton.setScale(buttonScale);
+
     // Add entrance animation for buttons
     [
       this.startGameButton,
       this.tutorialButton,
       this.instructionsButton,
+      this.highScoresButton, // Add high scores button to the animation array
     ].forEach((button, index) => {
       button.y += 20;
       button.alpha = 0;
@@ -438,6 +462,7 @@ class TitleScene extends Phaser.Scene {
       this.startGameButton,
       this.tutorialButton,
       this.instructionsButton,
+      this.highScoresButton, // Add high scores button to the buttons array
     ];
   }
 
