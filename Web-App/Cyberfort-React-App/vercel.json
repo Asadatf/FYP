@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "Web-App/Cyberfort-React-App/public/Games/Phishing_game_Latest/Backend/src/server.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "Web-App/Cyberfort-React-App/public/Games/Phishing_game_Latest/Backend/src/server.js"
+    }
+  ]
+}
