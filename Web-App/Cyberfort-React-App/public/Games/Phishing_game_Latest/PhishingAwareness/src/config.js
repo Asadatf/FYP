@@ -1,9 +1,4 @@
-// In config.js
-const API_URL =
-  window.location.hostname === "localhost" ||
-  window.location.hostname === "127.0.0.1"
-    ? "http://localhost:3000/api"
-    : "https://fyp-website-gilt.vercel.app/api"; // Using your actual Vercel domain
+const API_URL = "http://localhost:3000/api";
 // Fallback configuration that will work without external assets
 const config = {
   type: Phaser.AUTO,

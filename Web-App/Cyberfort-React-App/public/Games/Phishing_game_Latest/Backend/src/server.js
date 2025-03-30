@@ -5,12 +5,7 @@ const mongoose = require("mongoose");
 const MessageGenerator = require("./services/MessageGenerator");
 
 const app = express();
-app.use(
-  cors({
-    origin: "*", // Allow requests from any origin (you can restrict this later)
-    methods: ["GET", "POST"],
-  })
-);
+app.use(cors());
 app.use(express.json());
 
 // Routes
@@ -77,5 +72,3 @@ mongoose
     console.log(`Database connection failed: ${error.message}`);
     process.exit(1); // Exit the process on connection failure
   });
-
-module.exports = app;
