@@ -77,3 +77,5 @@ mongoose
     console.log(`Database connection failed: ${error.message}`);
     process.exit(1); // Exit the process on connection failure
   });
+
+module.exports = app;
