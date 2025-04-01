@@ -1,38 +1,58 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import titleBackground from '../assets/images/titleBackground.jpeg.jpg';
 import phishingThumbnail from '../assets/images/phishing_thumbnail.jpg';
 import firewallthumbnail from '../assets/images/firewall-thumbnail.jpg';
 import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
+
+  const [games, setGames] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [userData] = useState({
     name: 'Asad Tariq',
     email: 'asad@mail.com'
   });
 
-  const games = [
-    {
-      id: 1,
-      title: 'Network Defender',
-      description: 'Learn to protect networks and systems from cyber attacks',
-      image: titleBackground,
-      url: '/Games/Network_Defender/ND_frontend/index.html'
-    },
-    {
-      id: 2,
-      title: 'Phishing Awareness',
-      description: 'Train yourself to identify and avoid phishing attempts',
-      image: phishingThumbnail,
-      url: '/Games/Phishing_game_Latest/PhishingAwareness'
-    },
-    {
-      id: 3,
-      title: 'CyberFortress',
-      description: 'Train yourself to identify attacks and their defences',
-      image: firewallthumbnail,
-      url: '/Games/Cyber_fortress/index.html'
-    }
-  ];
+  useEffect(() => {
+    const fetchGames = async () => {
+      try {
+        const response = await fetch("http://localhost:5500/api/games/getgames?is_active=1");
+        const data = await response.json(); // Convert response to JSON
+
+        // Transform Google Drive URLs if needed
+      const gamesWithFixedImages = data.games.map(game => {
+        if (game.game_thumbnail && game.game_thumbnail.includes('drive.google.com/file/d/')) {
+          // Extract the file ID
+          const fileIdMatch = game.game_thumbnail.match(/\/d\/(.+?)\/view/);
+          if (fileIdMatch && fileIdMatch[1]) {
+            // Create direct image URL
+            game.game_thumbnail = `https://drive.google.com/uc?export=view&id=${fileIdMatch[1]}`;
+          }
+        }
+        return game;
+      });
+
+
+        setGames(data.games); // Store games in state
+        console.log(data.games[2].game_thumbnail)
+      } catch (err) {
+        console.error("Failed to fetch games:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGames();
+  }, []);
+
+  if (loading) return <p>Loading games...</p>;
+
+
+
+
+  
+
+  
 
   const quizzes = [
     {
@@ -100,21 +120,23 @@ const Dashboard = () => {
                 <div className="card-body p-24">
                   <div className="row g-24">
                     {games.map(game => (
-                      <div key={game.id} className="col-md-6 col-lg-4">
+                      <div key={game.game_id} className="col-md-6 col-lg-4">
                         <div className="card border border-gray-100 h-100 transition-all hover-shadow">
                           <div className="card-body p-0">
                             <div className="position-relative">
                               <div className="bg-main-100 overflow-hidden">
-                                <img 
-                                  src={game.image} 
+                              <img 
+                                  src={game.game_thumbnail}
                                   alt={game.title} 
                                   className="w-100" 
                                   style={{ height: '180px', objectFit: 'cover' }}
                                 />
+                              
                               </div>
+                              
                               <div className="position-absolute top-16 right-16">
                                 <span className="badge bg-main-600 text-white px-12 py-6 rounded-8">
-                                  Featured
+                                  {game.category}
                                 </span>
                               </div>
                             </div>
@@ -139,7 +161,7 @@ const Dashboard = () => {
                               </div>
                               
                               <a
-                                href={game.url}
+                                href={game.game_url}
                                 className="btn btn-main w-100 rounded-pill py-12"
                                 target="_blank"
                                 rel="noopener noreferrer"
