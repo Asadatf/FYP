@@ -7,40 +7,121 @@ class TimeManager {
     this.penalties = 0;
     this.warningTween = null; // Initialize as null
 
+    // Calculate responsive properties
+    this.calculateResponsiveProperties();
+
     // Create timer display
     this.createTimerDisplay();
 
-    // NEW CODE: Add time purchase button
+    // Create time purchase button
+    this.createTimePurchaseButton();
+
+    // Listen for screen resize
+    this.scene.scale.on("resize", this.handleResize, this);
+  }
+
+  // Calculate responsive properties based on screen size
+  calculateResponsiveProperties() {
+    // Get current screen dimensions
+    this.screenWidth = this.scene.scale.width;
+    this.screenHeight = this.scene.scale.height;
+
+    // Calculate scale factor based on screen dimensions
+    this.scaleFactor = Math.min(
+      this.screenWidth / 1280,
+      this.screenHeight / 720
+    );
+
+    // Determine if we're on a mobile device
+    this.isMobile = this.screenWidth < 768;
+
+    // Calculate UI dimensions based on screen size
+    this.containerWidth = Math.min(
+      200 * this.scaleFactor,
+      this.screenWidth * 0.25
+    );
+    this.containerHeight = Math.min(
+      40 * this.scaleFactor,
+      this.screenHeight * 0.06
+    );
+
+    // Calculate font sizes
+    this.fontSize = Math.max(Math.floor(20 * this.scaleFactor), 12);
+    this.iconSize = Math.max(Math.floor(20 * this.scaleFactor), 14);
+
+    // Keep timer consistently at top left regardless of screen size
+    this.timerX = 10;
+    this.timerY = 10;
+
+    // Calculate button sizes
+    this.buttonWidth = Math.min(150 * this.scaleFactor, this.screenWidth * 0.2);
+    this.buttonHeight = Math.min(
+      50 * this.scaleFactor,
+      this.screenHeight * 0.07
+    );
+
+    // Button position
+    if (this.isMobile) {
+      // For mobile, position at bottom center
+      this.buttonX = this.screenWidth / 2;
+      this.buttonY = this.screenHeight - this.buttonHeight / 2 - 10;
+    } else {
+      // For desktop, position at bottom right
+      this.buttonX = this.screenWidth - this.buttonWidth / 2 - 10;
+      this.buttonY = this.screenHeight - this.buttonHeight / 2 - 10;
+    }
+  }
+
+  // Handle screen resize events
+  handleResize() {
+    // Recalculate responsive properties
+    this.calculateResponsiveProperties();
+
+    // Remove existing elements
+    if (this.timerContainer) {
+      this.timerContainer.destroy();
+    }
+    if (this.timeButtonContainer) {
+      this.timeButtonContainer.destroy();
+    }
+
+    // Recreate UI elements with new sizes
+    this.createTimerDisplay();
     this.createTimePurchaseButton();
   }
 
   createTimerDisplay() {
     // Timer container
-    this.timerContainer = this.scene.add.container(10, 10);
+    this.timerContainer = this.scene.add.container(this.timerX, this.timerY);
 
     // Background for timer
     const bg = this.scene.add
-      .rectangle(0, 0, 200, 40, 0x000000, 0.7)
+      .rectangle(0, 0, this.containerWidth, this.containerHeight, 0x000000, 0.7)
       .setOrigin(0, 0);
 
-    // Timer icon
+    // Timer icon with responsive size
     const timerIcon = this.scene.add
-      .text(10, 10, "⏱️", { fontSize: "20px" })
-      .setOrigin(0, 0);
+      .text(10, this.containerHeight / 2, "⏱️", {
+        fontSize: this.iconSize + "px",
+      })
+      .setOrigin(0, 0.5);
 
-    // Timer text
+    // Timer text with responsive font size
     this.timerText = this.scene.add
-      .text(40, 10, "60:00", {
-        fontSize: "20px",
+      .text(10 + this.iconSize + 10, this.containerHeight / 2, "60s", {
+        fontSize: this.fontSize + "px",
         fontFamily: "Courier New",
         fill: "#00ff00",
       })
-      .setOrigin(0, 0);
+      .setOrigin(0, 0.5);
 
     this.timerContainer.add([bg, timerIcon, this.timerText]);
 
     // Create warning flash tween
     this.createWarningTween();
+
+    // Make sure the container is visible on top
+    this.timerContainer.setDepth(100);
   }
 
   createWarningTween() {
@@ -56,15 +137,29 @@ class TimeManager {
   }
 
   createTimePurchaseButton() {
-    // Create a "Buy Time" button in the bottom right corner
-    const buttonX = this.scene.scale.width - 100;
-    const buttonY = this.scene.scale.height - 50;
+    // Create a "Buy Time" button with responsive positioning and sizing
+    const buttonX = this.buttonX;
+    const buttonY = this.buttonY;
 
-    // Create button container (separate from timer container)
+    // Create button container
     this.timeButtonContainer = this.scene.add.container(0, 0).setDepth(100);
 
+    // Responsive button text size and padding
+    const buttonTextSize = Math.max(Math.floor(18 * this.scaleFactor), 12);
+    const buttonPadding = Math.max(Math.floor(10 * this.scaleFactor), 5);
+
+    // Create button text based on available space and device
+    const buttonText = this.isMobile ? "+5s" : "+5s (10 CC)";
+
     const buttonBg = this.scene.add
-      .rectangle(buttonX, buttonY, 150, 50, 0x003300, 0.8)
+      .rectangle(
+        buttonX,
+        buttonY,
+        this.buttonWidth,
+        this.buttonHeight,
+        0x003300,
+        0.8
+      )
       .setOrigin(0.5)
       .setStrokeStyle(2, 0x00ff00)
       .setInteractive()
@@ -73,9 +168,9 @@ class TimeManager {
       .on("pointerout", () => buttonBg.setFillStyle(0x003300));
 
     // Add button text
-    const buttonText = this.scene.add
-      .text(buttonX, buttonY, "+5s (10 CC)", {
-        fontSize: "18px",
+    const textObj = this.scene.add
+      .text(buttonX, buttonY, buttonText, {
+        fontSize: buttonTextSize + "px",
         fontFamily: "Courier New",
         fill: "#00ff00",
         stroke: "#003300",
@@ -84,7 +179,7 @@ class TimeManager {
       .setOrigin(0.5);
 
     // Add items to button container
-    this.timeButtonContainer.add([buttonBg, buttonText]);
+    this.timeButtonContainer.add([buttonBg, textObj]);
   }
 
   purchaseExtraTime() {
@@ -102,17 +197,20 @@ class TimeManager {
         // Add 5 seconds to timer
         this.timeRemaining += 5000; // 5 seconds in milliseconds
 
-        // Create success effect
+        // Create success effect scaled to screen size
         const successText = this.scene.add
           .text(
             this.scene.scale.width / 2,
             this.scene.scale.height / 2,
             "+5 SECONDS ADDED",
             {
-              fontSize: "28px",
+              fontSize: Math.max(28 * this.scaleFactor, 18) + "px",
               fill: "#00ff00",
               backgroundColor: "#000000",
-              padding: { x: 15, y: 10 },
+              padding: {
+                x: 15 * this.scaleFactor,
+                y: 10 * this.scaleFactor,
+              },
               stroke: "#ffffff",
               strokeThickness: 2,
             }
@@ -131,7 +229,7 @@ class TimeManager {
             this.scene.tweens.add({
               targets: successText,
               alpha: 0,
-              y: "-=50",
+              y: "-=" + 50 * this.scaleFactor,
               duration: 500,
               onComplete: () => successText.destroy(),
             });
@@ -144,17 +242,20 @@ class TimeManager {
           this.timerText.setColor("#00ff00");
         });
       } else {
-        // Show insufficient funds message
+        // Show insufficient funds message scaled to screen size
         const errorText = this.scene.add
           .text(
             this.scene.scale.width / 2,
             this.scene.scale.height / 2,
-            "NOT ENOUGH CYBERCOINS",
+            "NOT ENOUGH COINS",
             {
-              fontSize: "24px",
+              fontSize: Math.max(24 * this.scaleFactor, 16) + "px",
               fill: "#ff0000",
               backgroundColor: "#000000",
-              padding: { x: 10, y: 5 },
+              padding: {
+                x: 10 * this.scaleFactor,
+                y: 5 * this.scaleFactor,
+              },
             }
           )
           .setOrigin(0.5)
@@ -164,7 +265,7 @@ class TimeManager {
         this.scene.tweens.add({
           targets: errorText,
           alpha: 0,
-          y: "-=30",
+          y: "-=" + 30 * this.scaleFactor,
           duration: 1500,
           onComplete: () => errorText.destroy(),
         });
@@ -173,6 +274,9 @@ class TimeManager {
   }
 
   destroy() {
+    // Clean up resize listener
+    this.scene.scale.off("resize", this.handleResize, this);
+
     if (this.warningTween) {
       this.warningTween.stop();
       this.warningTween = null;
@@ -253,14 +357,14 @@ class TimeManager {
     this.timeRemaining -= seconds * 1000;
     this.penalties += 1;
 
-    // Create penalty flash effect
+    // Create penalty flash effect with responsive sizing
     const penaltyText = this.scene.add
       .text(
         this.scene.scale.width / 2,
         this.scene.scale.height / 2,
         `-${seconds}s PENALTY`,
         {
-          fontSize: "32px",
+          fontSize: Math.max(32 * this.scaleFactor, 20) + "px",
           fill: "#ff0000",
           stroke: "#000000",
           strokeThickness: 4,
@@ -271,23 +375,11 @@ class TimeManager {
     this.scene.tweens.add({
       targets: penaltyText,
       alpha: 0,
-      y: "-=50",
+      y: "-=" + 50 * this.scaleFactor,
       duration: 1000,
       ease: "Power2",
       onComplete: () => penaltyText.destroy(),
     });
-  }
-
-  // Clean up when scene is shut down
-  destroy() {
-    if (this.warningTween) {
-      this.warningTween.stop();
-      this.warningTween = null;
-    }
-    if (this.timerEvent) {
-      this.timerEvent.remove();
-    }
-    this.timerContainer.destroy();
   }
 }
 

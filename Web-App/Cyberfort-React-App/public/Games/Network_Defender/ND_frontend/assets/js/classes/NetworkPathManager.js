@@ -165,6 +165,10 @@ class NetworkPathManager {
       console.log("Path is valid! Router and both switches configured.");
       this.highlightValidPath();
       this.createSuccessParticles();
+
+      // Emit network complete event for scoring
+      this.scene.events.emit("networkComplete");
+
       return true;
     } else {
       // Show which devices still need configuration
@@ -515,7 +519,52 @@ class NetworkPathManager {
         repeat: -1,
       });
 
-      // Create terminal-style input field
+      // ===== MOBILE KEYBOARD SUPPORT =====
+      // Create an actual HTML input element for mobile devices
+      this.isMobile = this.detectMobile();
+      if (this.isMobile) {
+        // Create invisible HTML input for mobile devices
+        this.mobileInput = document.createElement("input");
+        this.mobileInput.type = "text";
+        this.mobileInput.inputMode = "numeric"; // Suggest numeric keyboard
+        this.mobileInput.style.position = "fixed";
+        this.mobileInput.style.opacity = "0.01"; // Nearly invisible but focusable
+        this.mobileInput.style.pointerEvents = "none"; // Prevent interaction with the element directly
+        this.mobileInput.style.left = "50%";
+        this.mobileInput.style.top = "50%";
+        this.mobileInput.style.transform = "translate(-50%, -50%)";
+        this.mobileInput.style.width = "100px";
+        this.mobileInput.style.height = "30px";
+        this.mobileInput.style.zIndex = "1000";
+
+        // Add input to document
+        document.body.appendChild(this.mobileInput);
+
+        // Focus the input to trigger keyboard
+        setTimeout(() => this.mobileInput.focus(), 100);
+
+        // Update game state when input changes
+        this.mobileInput.addEventListener("input", (e) => {
+          // Filter input to only allow numbers and dots
+          let filteredValue = e.target.value.replace(/[^0-9.]/g, "");
+          // Limit length
+          if (filteredValue.length > 15) {
+            filteredValue = filteredValue.substring(0, 15);
+            e.target.value = filteredValue;
+          }
+          this.userIP = filteredValue;
+          this.updateInputText();
+        });
+
+        // Handle submission/cancellation
+        this.mobileInput.addEventListener("keyup", (e) => {
+          if (e.key === "Enter") {
+            this.checkIP(node);
+          }
+        });
+      }
+
+      // Create terminal-style input field (visual representation)
       this.inputBox = this.scene.add.rectangle(0, 20, 300, 40, 0x003300, 1);
       this.inputBox.setStrokeStyle(1, 0x00ff00, 1);
 
@@ -527,15 +576,32 @@ class NetworkPathManager {
         })
         .setOrigin(0.5);
 
+      // Make input field interactive on mobile
+      if (this.isMobile) {
+        this.inputBox.setInteractive().on("pointerdown", () => {
+          // Refocus the input when user clicks on the visual input field
+          this.mobileInput.focus();
+        });
+      }
+
       // Terminal commands section
+      const commandsTextContent = this.isMobile
+        ? "[Input] Type | [Enter] Submit | [Back] Cancel"
+        : "[Enter] Submit | [Escape] Cancel | [Backspace] Delete";
+
       this.commandsText = this.scene.add
-        .text(0, 80, "[Enter] Submit | [Escape] Cancel | [Backspace] Delete", {
+        .text(0, 80, commandsTextContent, {
           fontSize: "14px",
           fontFamily: "Courier New",
           fill: "#888888",
           align: "center",
         })
         .setOrigin(0.5);
+
+      // Add virtual buttons for mobile
+      if (this.isMobile) {
+        this.createVirtualButtons(node);
+      }
 
       // Add all elements to container
       this.menuContainer.add([
@@ -556,45 +622,153 @@ class NetworkPathManager {
       // Add typing animation
       this.updateInputText();
 
-      // Remove previous keydown listener if exists
-      if (this.keydownListener) {
-        this.scene.input.keyboard.off("keydown", this.keydownListener);
-      }
-
-      this.keydownListener = (event) => {
-        if (this.menuActive) {
-          // IP typing logic
-          if (event.key === "Backspace") {
-            this.userIP = this.userIP.slice(0, -1);
-            this.updateInputText();
-          } else if (event.key.length === 1 && /[0-9.]|\b/.test(event.key)) {
-            // Limit to valid IP format (numbers and dots)
-            if (this.userIP.length < 15) {
-              // Prevent overly long input
-              this.userIP += event.key;
-              this.updateInputText();
-
-              // Add typing sound effect
-              try {
-                this.scene.sound.play("clickSound", { volume: 0.1 });
-              } catch (e) {
-                console.log("Sound not available");
-              }
-            }
-          } else if (event.key === "Enter") {
-            this.checkIP(node);
-          } else if (event.key === "Escape") {
-            this.closePopup();
-          }
+      // For desktop: handle keyboard input
+      if (!this.isMobile) {
+        // Remove previous keydown listener if exists
+        if (this.keydownListener) {
+          this.scene.input.keyboard.off("keydown", this.keydownListener);
         }
-      };
 
-      // Attach the new listener
-      this.scene.input.keyboard.on("keydown", this.keydownListener);
+        this.keydownListener = (event) => {
+          if (this.menuActive) {
+            // IP typing logic
+            if (event.key === "Backspace") {
+              this.userIP = this.userIP.slice(0, -1);
+              this.updateInputText();
+            } else if (event.key.length === 1 && /[0-9.]|\b/.test(event.key)) {
+              // Limit to valid IP format (numbers and dots)
+              if (this.userIP.length < 15) {
+                // Prevent overly long input
+                this.userIP += event.key;
+                this.updateInputText();
+
+                // Add typing sound effect
+                try {
+                  this.scene.sound.play("clickSound", { volume: 0.1 });
+                } catch (e) {
+                  console.log("Sound not available");
+                }
+              }
+            } else if (event.key === "Enter") {
+              this.checkIP(node);
+            } else if (event.key === "Escape") {
+              this.closePopup();
+            }
+          }
+        };
+
+        // Attach the new listener
+        this.scene.input.keyboard.on("keydown", this.keydownListener);
+      }
 
       // Add an animated blinking cursor
       this.createBlinkingCursor();
     }
+  }
+
+  // Helper method to detect mobile devices
+  detectMobile() {
+    return (
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent
+      ) ||
+      (window.innerWidth <= 800 && window.innerHeight <= 900)
+    );
+  }
+
+  // Create virtual buttons for mobile devices
+  createVirtualButtons(node) {
+    const buttonY = 130;
+    const buttonWidth = 120;
+    const buttonHeight = 40;
+    const spacing = 150;
+
+    // Submit button
+    const submitButton = this.scene.add
+      .rectangle(-spacing / 2, buttonY, buttonWidth, buttonHeight, 0x005500, 1)
+      .setStrokeStyle(2, 0x00ff00, 1);
+
+    const submitText = this.scene.add
+      .text(-spacing / 2, buttonY, "SUBMIT", {
+        fontSize: "18px",
+        fill: "#00ff00",
+      })
+      .setOrigin(0.5);
+
+    submitButton.setInteractive().on("pointerdown", () => {
+      this.checkIP(node);
+    });
+
+    // Cancel button
+    const cancelButton = this.scene.add
+      .rectangle(spacing / 2, buttonY, buttonWidth, buttonHeight, 0x550000, 1)
+      .setStrokeStyle(2, 0xff0000, 1);
+
+    const cancelText = this.scene.add
+      .text(spacing / 2, buttonY, "CANCEL", {
+        fontSize: "18px",
+        fill: "#ff0000",
+      })
+      .setOrigin(0.5);
+
+    cancelButton.setInteractive().on("pointerdown", () => {
+      this.closePopup();
+    });
+
+    // Add buttons to container
+    this.menuContainer.add([
+      submitButton,
+      submitText,
+      cancelButton,
+      cancelText,
+    ]);
+
+    // Add hover/touch effects
+    [submitButton, cancelButton].forEach((button) => {
+      button.on("pointerover", function () {
+        this.setScale(1.05);
+      });
+      button.on("pointerout", function () {
+        this.setScale(1);
+      });
+    });
+  }
+
+  // Modified to handle mobile input cleanup
+  closePopup() {
+    if (!this.menuActive) return;
+
+    this.menuActive = false;
+
+    // Clean up mobile input if it exists
+    if (this.mobileInput) {
+      document.body.removeChild(this.mobileInput);
+      this.mobileInput = null;
+    }
+
+    // Cancel cursor blinking
+    if (this.cursorTimer) {
+      this.cursorTimer.remove();
+    }
+
+    // Animate container closing
+    this.scene.tweens.add({
+      targets: this.menuContainer,
+      alpha: 0,
+      scaleX: 0.9,
+      scaleY: 0.9,
+      duration: 200,
+      onComplete: () => {
+        // Clean up all menu elements
+        this.menuContainer.destroy();
+        this.menuContainer = null;
+
+        // Remove keyboard listener
+        if (this.keydownListener) {
+          this.scene.input.keyboard.off("keydown", this.keydownListener);
+        }
+      },
+    });
   }
 
   updateInputText() {
@@ -634,6 +808,9 @@ class NetworkPathManager {
       } catch (e) {
         console.log("Sound not available");
       }
+
+      // Emit device configured event for scoring
+      this.scene.events.emit("deviceConfigured", this.currentDeviceType);
 
       // Show success message before closing popup
       this.showResponseMessage("IP Configuration Successful", "#00ff00", true);

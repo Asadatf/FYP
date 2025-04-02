@@ -7,7 +7,7 @@ class GameScene extends Phaser.Scene {
     // Text setup for interaction prompt
     this.interactText = this.add
       .text(window.innerWidth / 2, window.innerHeight / 2, "", {
-        fontSize: "24px",
+        fontSize: this.calculateFontSize(24),
         fill: "#00ff00",
         fontFamily: "Courier New",
         stroke: "#003300",
@@ -18,6 +18,72 @@ class GameScene extends Phaser.Scene {
       .setDepth(1)
       .setVisible(false);
     this.scene.launch("Ui");
+
+    // Initialize responsive scaling properties
+    this.setResponsiveProperties();
+  }
+
+  // New method to set responsive properties based on screen size
+  setResponsiveProperties() {
+    // Get current screen dimensions
+    this.screenWidth = this.scale.width;
+    this.screenHeight = this.scale.height;
+
+    // Determine if we're on a mobile device
+    this.isMobile = this.screenWidth < 768;
+
+    // Set scaling factor based on screen size
+    this.scaleFactor = Math.min(
+      this.screenWidth / 1280,
+      this.screenHeight / 720
+    );
+
+    // Set minimum device scale to ensure visibility on small screens
+    this.deviceScale = this.isMobile
+      ? Math.max(0.08, this.scaleFactor * 0.15)
+      : Math.max(0.1, this.scaleFactor * 0.15);
+
+    // Add this new code for character scaling
+    // Set scaling for characters (larger than devices)
+    this.characterScale = this.isMobile
+      ? Math.max(0.12, this.scaleFactor * 0.25)
+      : Math.max(0.15, this.scaleFactor * 0.25);
+
+    // Define responsive positions using relative coordinates
+    this.devicePositions = {
+      defender: {
+        x: this.screenWidth * 0.25,
+        y: this.screenHeight * 0.5,
+      },
+      receiver: {
+        x: this.screenWidth * 0.75,
+        y: this.screenHeight * 0.5,
+      },
+      leftSwitch: {
+        x: this.screenWidth * 0.25,
+        y: this.screenHeight * 0.4,
+      },
+      rightSwitch: {
+        x: this.screenWidth * 0.75,
+        y: this.screenHeight * 0.4,
+      },
+      router: {
+        x: this.screenWidth * 0.5,
+        y: this.screenHeight * 0.3,
+      },
+    };
+
+    // Calculate spacing between elements based on screen size
+    this.deviceSpacing = this.screenWidth * 0.05;
+  }
+
+  // Helper method to calculate font size based on screen
+  calculateFontSize(baseSize) {
+    const fontScaleFactor = Math.min(
+      this.screenWidth / 1280,
+      this.screenHeight / 720
+    );
+    return Math.max(Math.floor(baseSize * fontScaleFactor), 12) + "px";
   }
 
   create() {
@@ -25,48 +91,79 @@ class GameScene extends Phaser.Scene {
     this.createEnhancedBackground();
 
     // Add back button
-    this.createBackButton();
+    // this.createBackButton();
+    this.initializeUIButtons();
 
     // Initialize TimeManager and WalletManager first
     this.timeManager = new TimeManager(this);
     this.walletManager = new WalletManager(this);
 
+    this.scoreManager = new ScoreManager(this);
+    this.highScoreManager = new HighScoreManager(this);
+
+    this.achievementTracker = new AchievementTracker(this);
+    this.createAchievementsButton();
+
     this.createVisualEffects();
 
-    // Creating Defender
-    const dX = window.innerWidth / 4;
-    const dY = 300;
-
-    this.defender = new Defender(this, dX - 100, dY + 200, "defender");
+    // Creating Defender with responsive positioning
+    const defenderPos = this.devicePositions.defender;
+    this.defender = new Defender(
+      this,
+      defenderPos.x - this.deviceSpacing,
+      defenderPos.y + this.deviceSpacing,
+      "defender"
+    );
+    this.defender.setScale(this.characterScale); // Use character scale instead of device scale
     this.addGlowEffect(this.defender);
 
-    // Creating Receiver - Position it further away initially
-    const rX = (window.innerWidth * 3) / 4;
-    const rY = 300;
-    const receiverOffset = 150; // Distance away from the switch
+    // Creating Receiver with responsive positioning
+    const receiverPos = this.devicePositions.receiver;
+    const receiverOffset = this.deviceSpacing * 2; // Adjust based on screen size
 
     // Position receiver farther from the switch
-    this.receiver = new Receiver(this, rX + receiverOffset, rY, "receiver");
+    this.receiver = new Receiver(
+      this,
+      receiverPos.x + receiverOffset,
+      receiverPos.y + 100,
+      "receiver"
+    );
+    this.receiver.setScale(this.characterScale); // Use character scale instead of device scale
     this.addGlowEffect(this.receiver);
 
     // Store the receiver's final position (near the switch)
-    this.receiverFinalX = rX + 60;
-    this.receiverFinalY = rY;
+    this.receiverFinalX = receiverPos.x + this.deviceSpacing * 0.4;
+    this.receiverFinalY = receiverPos.y;
 
-    // Creating Network Devices
+    // Creating Network Devices with responsive positioning
     this.obstacles = this.physics.add.staticGroup();
 
     // Create router in the middle position
-    const routerX = (dX + rX) / 2;
-    const routerY = (dY + rY) / 2 - 100;
-    this.router = new NetworkDevice(this, routerX, routerY, "router");
+    const routerPos = this.devicePositions.router;
+    this.router = new NetworkDevice(this, routerPos.x, routerPos.y, "router");
+    this.router.setScale(this.deviceScale); // Apply responsive scaling
     this.addGlowEffect(this.router);
     this.obstacles.add(this.router);
 
-    this.leftSwitch = new NetworkDevice(this, dX, dY, "switch");
+    // Create switches with responsive positioning
+    const leftSwitchPos = this.devicePositions.leftSwitch;
+    this.leftSwitch = new NetworkDevice(
+      this,
+      leftSwitchPos.x,
+      leftSwitchPos.y,
+      "switch"
+    );
+    this.leftSwitch.setScale(this.deviceScale); // Apply responsive scaling
     this.obstacles.add(this.leftSwitch);
 
-    this.rightSwitch = new NetworkDevice(this, rX, rY, "switch");
+    const rightSwitchPos = this.devicePositions.rightSwitch;
+    this.rightSwitch = new NetworkDevice(
+      this,
+      rightSwitchPos.x,
+      rightSwitchPos.y,
+      "switch"
+    );
+    this.rightSwitch.setScale(this.deviceScale); // Apply responsive scaling
     this.obstacles.add(this.rightSwitch);
 
     [this.leftSwitch, this.rightSwitch].forEach((device) => {
@@ -89,10 +186,11 @@ class GameScene extends Phaser.Scene {
     // Creating Packet
     this.packet = new Packet(
       this,
-      this.defender.x + 10,
+      this.defender.x + 10 * this.scaleFactor, // Scale the offset
       this.defender.y,
       "packet"
     );
+    this.packet.setScale(0.05 * this.scaleFactor); // Scale based on screen size
 
     // Make the packet follow the defender
     this.packet.followDefender(this.defender);
@@ -103,19 +201,22 @@ class GameScene extends Phaser.Scene {
       this.scale.height / 2,
       "briefcase"
     );
-    this.briefcase_red.setScale(2).setDepth(1).setVisible(false);
+    this.briefcase_red
+      .setScale(2 * this.scaleFactor)
+      .setDepth(1)
+      .setVisible(false);
 
     this.Encryptiontutorial = new EncryptionTutorial(this);
 
-    // Message handler
+    // Message handler with responsive positions
     this.MessageHandler = new MessageHandler(
       this,
       this.packet,
       this.briefcase_red,
-      dX,
-      dY,
-      rX,
-      rY,
+      leftSwitchPos.x,
+      leftSwitchPos.y,
+      rightSwitchPos.x,
+      rightSwitchPos.y,
       this.Encryptiontutorial,
       this.decryptionPuzzle
     );
@@ -143,10 +244,536 @@ class GameScene extends Phaser.Scene {
     this.events.on("timeUp", this.handleTimeUp, this);
 
     // Initialize network tutorial and help components
-    this.initializeNetworkComponents();
+    // this.initializeNetworkComponents();
 
-    // Initialize Encryption Guide
-    this.initializeEncryptionGuide();
+    // // Initialize Encryption Guide
+    // this.initializeEncryptionGuide();
+
+    // Setup resize handler for responsiveness
+    this.scale.on("resize", this.handleResize, this);
+  }
+
+  createAchievementsButton() {
+    // Calculate responsive sizes - use the same calculations as in initializeUIButtons
+    const scaleFactor = Math.min(
+      this.scale.width / 1280,
+      this.scale.height / 720
+    );
+    const isMobile = this.scale.width < 768;
+
+    // Use the position of the encryption guide button and add an additional buttonSpacing
+    const buttonX = this.uiButtonX;
+    const buttonY = 50 * scaleFactor + this.buttonSpacing * 3; // Position below encryption guide button
+
+    // Create achievements button container
+    const achievementsButton = this.add
+      .container(buttonX, buttonY)
+      .setDepth(101);
+
+    // Button background
+    const buttonBg = this.add
+      .rectangle(0, 0, 60, 60, 0x331100, 0.8)
+      .setStrokeStyle(2, 0xffcc00)
+      .setInteractive();
+
+    // Trophy icon
+    const trophyIcon = this.add
+      .text(0, -10, "🏆", { fontSize: "28px" })
+      .setOrigin(0.5);
+
+    // Button label
+    const buttonLabel = this.add
+      .text(0, 20, "Achievements", {
+        fontSize: "12px",
+        fill: "#ffcc00",
+      })
+      .setOrigin(0.5);
+
+    // Add elements to container
+    achievementsButton.add([buttonBg, trophyIcon, buttonLabel]);
+
+    // Add hover effects
+    buttonBg
+      .on("pointerover", () => {
+        buttonBg.fillColor = 0x663300;
+        trophyIcon.setScale(1.1);
+      })
+      .on("pointerout", () => {
+        buttonBg.fillColor = 0x331100;
+        trophyIcon.setScale(1);
+      })
+      .on("pointerdown", () => {
+        // Show achievements menu
+        if (this.achievementTracker) {
+          this.achievementTracker.showAchievementsMenu();
+        }
+      });
+
+    // Add a pulse animation to draw attention
+    this.tweens.add({
+      targets: trophyIcon,
+      scale: { from: 1, to: 1.2 },
+      duration: 1000,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut",
+    });
+
+    // Store reference to update in handleUIButtonsResize
+    this.achievementsButtonContainer = achievementsButton;
+  }
+
+  initializeUIButtons() {
+    // Calculate responsive sizes
+    const scaleFactor = Math.min(
+      this.scale.width / 1280,
+      this.scale.height / 720
+    );
+    const isMobile = this.scale.width < 768;
+
+    // Calculate base position for top-right corner buttons
+    this.uiButtonX = this.scale.width - 50 * scaleFactor;
+
+    // Create vertical spacing between buttons
+    // Use smaller spacing on mobile
+    this.buttonSpacing = isMobile
+      ? Math.max(50, 60 * scaleFactor)
+      : Math.max(70, 80 * scaleFactor);
+
+    // Create buttons in order from top to bottom
+    // 1. Exit button (highest)
+    this.createBackButton(this.uiButtonX, 50 * scaleFactor);
+
+    // 2. Network guide button (middle)
+    this.createNetworkGuideButton(
+      this.uiButtonX,
+      50 * scaleFactor + this.buttonSpacing
+    );
+
+    // 3. Encryption guide button (lowest)
+    this.createEncryptionGuideButton(
+      this.uiButtonX,
+      50 * scaleFactor + this.buttonSpacing * 2
+    );
+
+    // Add listener for screen resize
+    this.scale.on("resize", this.handleUIButtonsResize, this);
+  }
+
+  // Handle resize for all UI buttons
+  // Handle resize for all UI buttons
+  handleUIButtonsResize() {
+    // Recalculate responsive sizes
+    const scaleFactor = Math.min(
+      this.scale.width / 1280,
+      this.scale.height / 720
+    );
+    const isMobile = this.scale.width < 768;
+
+    // Update base position
+    this.uiButtonX = this.scale.width - 50 * scaleFactor;
+
+    // Update spacing
+    this.buttonSpacing = isMobile
+      ? Math.max(50, 60 * scaleFactor)
+      : Math.max(70, 80 * scaleFactor);
+
+    // Update each button position
+    if (this.backButtonContainer) {
+      this.backButtonContainer.setPosition(this.uiButtonX, 50 * scaleFactor);
+    }
+
+    if (this.networkGuideButton) {
+      const networkY = 50 * scaleFactor + this.buttonSpacing;
+      this.networkGuideButton.setPosition(this.uiButtonX, networkY);
+
+      if (this.networkGuideText) {
+        this.networkGuideText.setPosition(
+          this.uiButtonX,
+          networkY + 25 * scaleFactor
+        );
+      }
+    }
+
+    if (this.encryptHelpButton) {
+      const encryptY = 50 * scaleFactor + this.buttonSpacing * 2;
+      this.encryptHelpButton.setPosition(this.uiButtonX, encryptY);
+
+      if (this.encryptHelpText) {
+        this.encryptHelpText.setPosition(
+          this.uiButtonX,
+          encryptY + 25 * scaleFactor
+        );
+      }
+    }
+
+    // Update achievements button position
+    if (this.achievementsButtonContainer) {
+      const achievementsY = 50 * scaleFactor + this.buttonSpacing * 3;
+      this.achievementsButtonContainer.setPosition(
+        this.uiButtonX,
+        achievementsY
+      );
+    }
+  }
+
+  // Updated createBackButton method with fixed positioning
+  createBackButton(x, y) {
+    // Calculate responsive sizes
+    const scaleFactor = Math.min(
+      this.scale.width / 1280,
+      this.scale.height / 720
+    );
+    const isMobile = this.scale.width < 768;
+
+    // Calculate size based on screen dimensions
+    const hexSize = Math.max(
+      25,
+      isMobile ? 30 * scaleFactor : 40 * scaleFactor
+    );
+
+    // Create button container
+    this.backButtonContainer = this.add.container(x, y).setDepth(102);
+
+    // Create hexagonal shape for the back button
+    const hexagon = this.add.graphics();
+    hexagon.fillStyle(0x003300, 0.8);
+    hexagon.lineStyle(2, 0x00ff00, 1);
+
+    // Draw hexagon path scaled for screen size
+    const hexPoints = [];
+    for (let i = 0; i < 6; i++) {
+      const angle = (i * Math.PI) / 3 - Math.PI / 6;
+      hexPoints.push({
+        x: hexSize * Math.cos(angle),
+        y: hexSize * Math.sin(angle),
+      });
+    }
+
+    hexagon.beginPath();
+    hexagon.moveTo(hexPoints[0].x, hexPoints[0].y);
+    for (let i = 1; i < 6; i++) {
+      hexagon.lineTo(hexPoints[i].x, hexPoints[i].y);
+    }
+    hexagon.closePath();
+    hexagon.fillPath();
+    hexagon.strokePath();
+
+    // Add button text with responsive font size
+    const fontSize = Math.max(
+      12,
+      isMobile ? 14 * scaleFactor : 16 * scaleFactor
+    );
+    const text = this.add
+      .text(0, 0, "EXIT", {
+        fontSize: fontSize + "px",
+        fill: "#00ff00",
+        fontFamily: "Courier New",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5);
+
+    // Add a blinking cursor effect for cyberpunk feel
+    const cursor = this.add
+      .text(text.width / 2 + 3, 0, "_", {
+        fontSize: fontSize + "px",
+        fill: "#00ff00",
+        fontFamily: "Courier New",
+      })
+      .setOrigin(0, 0.5);
+
+    this.tweens.add({
+      targets: cursor,
+      alpha: 0,
+      duration: 600,
+      yoyo: true,
+      repeat: -1,
+    });
+
+    // Add elements to container
+    this.backButtonContainer.add([hexagon, text, cursor]);
+
+    // Add interactivity
+    hexagon
+      .setInteractive(
+        new Phaser.Geom.Polygon(hexPoints),
+        Phaser.Geom.Polygon.Contains
+      )
+      .on("pointerover", () => {
+        this.tweens.add({
+          targets: [text, cursor],
+          scale: 1.1,
+          duration: 100,
+        });
+
+        // Create glow effect
+        const glowGraphics = this.add.graphics();
+        glowGraphics.lineStyle(4, 0x00ff00, 0.7);
+        glowGraphics.strokePath();
+        this.backButtonContainer.add(glowGraphics);
+
+        // Animate glow
+        this.tweens.add({
+          targets: glowGraphics,
+          alpha: 0.3,
+          duration: 500,
+          yoyo: true,
+          repeat: -1,
+          onUpdate: () => {
+            glowGraphics.clear();
+            glowGraphics.lineStyle(4, 0x00ff00, glowGraphics.alpha);
+            glowGraphics.strokePath();
+          },
+        });
+
+        // Store reference for cleanup
+        this.backButtonGlow = glowGraphics;
+      })
+      .on("pointerout", () => {
+        this.tweens.add({
+          targets: [text, cursor],
+          scale: 1,
+          duration: 100,
+        });
+
+        if (this.backButtonGlow) {
+          this.tweens.killTweensOf(this.backButtonGlow);
+          this.backButtonGlow.destroy();
+          this.backButtonGlow = null;
+        }
+      })
+      .on("pointerdown", () => {
+        if (this.timeManager && this.timeManager.isActive) {
+          // Pause the timer
+          this.timeManager.isActive = false;
+          // Show confirmation dialog
+          this.showConfirmationDialog();
+        } else {
+          this.scene.start("Title");
+        }
+      });
+
+    // Add a terminal-style animation on first appearance
+    this.backButtonContainer.setAlpha(0);
+    this.tweens.add({
+      targets: this.backButtonContainer,
+      alpha: 1,
+      duration: 600,
+      ease: "Power2",
+    });
+  }
+
+  // Updated createNetworkGuideButton method with fixed positioning
+  createNetworkGuideButton(x, y) {
+    // Create and initialize network tutorial overlay
+    this.networkTutorial = new NetworkTutorialOverlay(this);
+
+    // Calculate responsive sizes
+    const scaleFactor = Math.min(
+      this.scale.width / 1280,
+      this.scale.height / 720
+    );
+    const isMobile = this.scale.width < 768;
+
+    // Button and text sizes - make smaller on mobile
+    const buttonSize = Math.max(
+      24,
+      isMobile ? 26 * scaleFactor : 32 * scaleFactor
+    );
+    const buttonPadding = Math.max(
+      6,
+      isMobile ? 8 * scaleFactor : 12 * scaleFactor
+    );
+    const fontSize = Math.max(
+      8,
+      isMobile ? 10 * scaleFactor : 12 * scaleFactor
+    );
+
+    // Create network guide button
+    this.networkGuideButton = this.add
+      .text(x, y, "?", {
+        fontSize: buttonSize + "px",
+        fontStyle: "bold",
+        backgroundColor: "#004466",
+        padding: {
+          x: buttonPadding,
+          y: buttonPadding,
+        },
+        borderRadius: 15,
+        fill: "#00ffff",
+      })
+      .setOrigin(0.5)
+      .setInteractive()
+      .setDepth(101);
+
+    // Add hover effects
+    this.networkGuideButton.on("pointerover", () => {
+      this.networkGuideButton.setScale(1.1);
+      this.networkGuideButton.setBackgroundColor("#006699");
+    });
+
+    this.networkGuideButton.on("pointerout", () => {
+      this.networkGuideButton.setScale(1);
+      this.networkGuideButton.setBackgroundColor("#004466");
+    });
+
+    // Show network tutorial when clicked
+    this.networkGuideButton.on("pointerdown", () => {
+      this.networkTutorial.showTutorial();
+    });
+
+    // Add help text with responsive positioning and font size
+    this.networkGuideText = this.add
+      .text(x, y + 25 * scaleFactor, "Network Guide", {
+        fontSize: fontSize + "px",
+        fill: "#ffffff",
+      })
+      .setOrigin(0.5)
+      .setDepth(101);
+
+    // Show tutorial on first load
+    this.time.delayedCall(1000, () => {
+      // Only show tutorial automatically if no devices are configured yet
+      if (
+        this.pathManager &&
+        !this.pathManager.isPathValid() &&
+        this.pathManager.currentPath.length === 0
+      ) {
+        this.networkTutorial.showTutorial();
+      }
+    });
+  }
+
+  // Updated createEncryptionGuideButton method with fixed positioning
+  createEncryptionGuideButton(x, y) {
+    // Create and initialize encryption guide overlay
+    this.encryptionGuide = new EncryptionGuideOverlay(this);
+
+    // Calculate responsive sizes
+    const scaleFactor = Math.min(
+      this.scale.width / 1280,
+      this.scale.height / 720
+    );
+    const isMobile = this.scale.width < 768;
+
+    // Button and text sizes - make smaller on mobile
+    const buttonSize = Math.max(
+      24,
+      isMobile ? 26 * scaleFactor : 32 * scaleFactor
+    );
+    const buttonPadding = Math.max(
+      6,
+      isMobile ? 8 * scaleFactor : 12 * scaleFactor
+    );
+    const fontSize = Math.max(
+      8,
+      isMobile ? 10 * scaleFactor : 12 * scaleFactor
+    );
+
+    // Create help button for encryption guide
+    this.encryptHelpButton = this.add
+      .text(x, y, "?", {
+        fontSize: buttonSize + "px",
+        fontStyle: "bold",
+        backgroundColor: "#440066",
+        padding: {
+          x: buttonPadding,
+          y: buttonPadding,
+        },
+        borderRadius: 15,
+        fill: "#ff00ff",
+      })
+      .setOrigin(0.5)
+      .setInteractive()
+      .setDepth(101);
+
+    // Add hover effects
+    this.encryptHelpButton.on("pointerover", () => {
+      this.encryptHelpButton.setScale(1.1);
+      this.encryptHelpButton.setBackgroundColor("#660099");
+    });
+
+    this.encryptHelpButton.on("pointerout", () => {
+      this.encryptHelpButton.setScale(1);
+      this.encryptHelpButton.setBackgroundColor("#440066");
+    });
+
+    // Show encryption guide when clicked
+    this.encryptHelpButton.on("pointerdown", () => {
+      this.encryptionGuide.showTutorial();
+    });
+
+    // Add help text with responsive positioning and font size
+    this.encryptHelpText = this.add
+      .text(x, y + 25 * scaleFactor, "Encryption Guide", {
+        fontSize: fontSize + "px",
+        fill: "#ffffff",
+      })
+      .setOrigin(0.5)
+      .setDepth(101);
+  }
+
+  // New method to handle resize events
+  handleResize(gameSize) {
+    // Update screen dimensions
+    this.screenWidth = gameSize.width;
+    this.screenHeight = gameSize.height;
+
+    // Recalculate responsive properties
+    this.setResponsiveProperties();
+
+    // Update positions of network devices
+    this.updateDevicePositions();
+  }
+
+  // New method to update device positions on resize
+  updateDevicePositions() {
+    if (!this.leftSwitch || !this.rightSwitch || !this.router) return;
+
+    // Update defender position (only if not actively controlled by player)
+    if (
+      !this.keys.w.isDown &&
+      !this.keys.a.isDown &&
+      !this.keys.s.isDown &&
+      !this.keys.d.isDown
+    ) {
+      const defenderPos = this.devicePositions.defender;
+      this.defender.setPosition(
+        defenderPos.x - this.deviceSpacing,
+        defenderPos.y + this.deviceSpacing
+      );
+      this.defender.setScale(this.characterScale); // Use character scale
+    }
+
+    // Update receiver position
+    const receiverPos = this.devicePositions.receiver;
+    const receiverOffset = this.deviceSpacing * 0.6;
+    this.receiver.setPosition(receiverPos.x + receiverOffset, receiverPos.y);
+    this.receiver.setScale(this.characterScale); // Use character scale
+    // Update receiver final position
+    this.receiverFinalX = receiverPos.x + this.deviceSpacing * 0.4;
+    this.receiverFinalY = receiverPos.y;
+
+    // Update network devices positions
+    const leftSwitchPos = this.devicePositions.leftSwitch;
+    this.leftSwitch.setPosition(leftSwitchPos.x, leftSwitchPos.y);
+    this.leftSwitch.setScale(this.deviceScale);
+
+    const rightSwitchPos = this.devicePositions.rightSwitch;
+    this.rightSwitch.setPosition(rightSwitchPos.x, rightSwitchPos.y);
+    this.rightSwitch.setScale(this.deviceScale);
+
+    const routerPos = this.devicePositions.router;
+    this.router.setPosition(routerPos.x, routerPos.y);
+    this.router.setScale(this.deviceScale);
+
+    // Update MessageHandler positions
+    this.MessageHandler.dX = leftSwitchPos.x;
+    this.MessageHandler.dY = leftSwitchPos.y;
+    this.MessageHandler.rX = rightSwitchPos.x;
+    this.MessageHandler.rY = rightSwitchPos.y;
+    this.MessageHandler.receiverX = rightSwitchPos.x;
+    this.MessageHandler.receiverY = rightSwitchPos.y;
   }
 
   createEnhancedBackground() {
@@ -325,136 +952,24 @@ class GameScene extends Phaser.Scene {
     }
   }
 
-  // GameScene.js - Update createBackButton() method
-  createBackButton() {
-    // Create a more cyberpunk-styled back button instead of using UiButton
-    const buttonX = this.scale.width - 80;
-    const buttonY = 50;
-
-    // Create button container
-    this.backButtonContainer = this.add
-      .container(buttonX, buttonY)
-      .setDepth(102);
-
-    // Create hexagonal shape for the back button
-    const hexagon = this.add.graphics();
-    hexagon.fillStyle(0x003300, 0.8);
-    hexagon.lineStyle(2, 0x00ff00, 1);
-
-    // Draw hexagon path
-    const hexPoints = [];
-    const size = 40;
-    for (let i = 0; i < 6; i++) {
-      const angle = (i * Math.PI) / 3 - Math.PI / 6;
-      hexPoints.push({
-        x: size * Math.cos(angle),
-        y: size * Math.sin(angle),
-      });
-    }
-
-    hexagon.beginPath();
-    hexagon.moveTo(hexPoints[0].x, hexPoints[0].y);
-    for (let i = 1; i < 6; i++) {
-      hexagon.lineTo(hexPoints[i].x, hexPoints[i].y);
-    }
-    hexagon.closePath();
-    hexagon.fillPath();
-    hexagon.strokePath();
-
-    // Add button text
-    const text = this.add
-      .text(0, 0, "EXIT", {
-        fontSize: "16px",
-        fill: "#00ff00",
-        fontFamily: "Courier New",
-        fontStyle: "bold",
-      })
-      .setOrigin(0.5);
-
-    // Add a blinking cursor effect for cyberpunk feel
-    const cursor = this.add
-      .text(text.width / 2 + 5, 0, "_", {
-        fontSize: "16px",
-        fill: "#00ff00",
-        fontFamily: "Courier New",
-      })
-      .setOrigin(0, 0.5);
-
-    this.tweens.add({
-      targets: cursor,
-      alpha: 0,
-      duration: 600,
-      yoyo: true,
-      repeat: -1,
-    });
-
-    // Add elements to container
-    this.backButtonContainer.add([hexagon, text, cursor]);
-
-    // Add hover glow effect
-    const glowGraphics = this.add.graphics();
-    this.backButtonContainer.add(glowGraphics);
-
-    // Add interactivity
-    hexagon
-      .setInteractive(
-        new Phaser.Geom.Polygon(hexPoints),
-        Phaser.Geom.Polygon.Contains
-      )
-      .on("pointerover", () => {
-        this.tweens.add({
-          targets: [text, cursor],
-          scale: 1.1,
-          duration: 100,
-        });
-
-        // Create glow effect
-        this.tweens.add({
-          targets: glowGraphics,
-          alpha: { from: 0.7, to: 0.3 },
-          duration: 800,
-          yoyo: true,
-          repeat: -1,
-          onUpdate: () => {
-            glowGraphics.clear();
-            glowGraphics.lineStyle(4, 0x00ff00, glowGraphics.alpha);
-            glowGraphics.strokePath();
-          },
-        });
-      })
-      .on("pointerout", () => {
-        this.tweens.add({
-          targets: [text, cursor],
-          scale: 1,
-          duration: 100,
-        });
-
-        this.tweens.killTweensOf(glowGraphics);
-        glowGraphics.clear();
-      })
-      .on("pointerdown", () => {
-        if (this.timeManager.isActive) {
-          // Pause the timer
-          this.timeManager.isActive = false;
-          // Show confirmation dialog
-          this.showConfirmationDialog();
-        } else {
-          this.scene.start("Title");
-        }
-      });
-
-    // Add a terminal-style animation on first appearance
-    this.backButtonContainer.setAlpha(0);
-    this.tweens.add({
-      targets: this.backButtonContainer,
-      alpha: 1,
-      duration: 600,
-      ease: "Power2",
-    });
-  }
-
   // Create a new method for the enhanced confirmation dialog
   showConfirmationDialog() {
+    // Calculate responsive sizes
+    const scaleFactor = Math.min(
+      this.scale.width / 1280,
+      this.scale.height / 720
+    );
+    const isMobile = this.scale.width < 768;
+
+    // Font sizes
+    const titleSize = Math.max(20, 28 * scaleFactor);
+    const textSize = Math.max(16, 24 * scaleFactor);
+    const buttonTextSize = Math.max(16, 20 * scaleFactor);
+
+    // Dialog dimensions
+    const dialogWidth = Math.min(500 * scaleFactor, this.scale.width * 0.9);
+    const dialogHeight = Math.min(300 * scaleFactor, this.scale.height * 0.7);
+
     // Hide previous dialog if exists
     if (this.confirmDialog) {
       this.confirmDialog.destroy();
@@ -479,46 +994,63 @@ class GameScene extends Phaser.Scene {
     // Add background with terminal style
     const bg = this.add.graphics();
     bg.fillStyle(0x000000, 0.9);
-    bg.fillRect(-250, -150, 500, 300);
+    bg.fillRect(-dialogWidth / 2, -dialogHeight / 2, dialogWidth, dialogHeight);
     bg.lineStyle(3, 0x00ffaa, 1);
-    bg.strokeRect(-250, -150, 500, 300);
+    bg.strokeRect(
+      -dialogWidth / 2,
+      -dialogHeight / 2,
+      dialogWidth,
+      dialogHeight
+    );
 
     // Add decorative terminal elements
     bg.lineStyle(2, 0x00ffaa, 0.8);
+    // Scale corner details based on dialog size
+    const cornerSize = Math.min(30, dialogWidth * 0.06);
+
     // Top-left corner detail
     bg.beginPath();
-    bg.moveTo(-250, -120);
-    bg.lineTo(-220, -120);
-    bg.lineTo(-220, -150);
+    bg.moveTo(-dialogWidth / 2, -dialogHeight / 2 + cornerSize);
+    bg.lineTo(-dialogWidth / 2, -dialogHeight / 2);
+    bg.lineTo(-dialogWidth / 2 + cornerSize, -dialogHeight / 2);
     bg.strokePath();
 
     // Top-right corner detail
     bg.beginPath();
-    bg.moveTo(250, -120);
-    bg.lineTo(220, -120);
-    bg.lineTo(220, -150);
+    bg.moveTo(dialogWidth / 2, -dialogHeight / 2 + cornerSize);
+    bg.lineTo(dialogWidth / 2, -dialogHeight / 2);
+    bg.lineTo(dialogWidth / 2 - cornerSize, -dialogHeight / 2);
     bg.strokePath();
 
     // Bottom-left corner detail
     bg.beginPath();
-    bg.moveTo(-250, 120);
-    bg.lineTo(-220, 120);
-    bg.lineTo(-220, 150);
+    bg.moveTo(-dialogWidth / 2, dialogHeight / 2 - cornerSize);
+    bg.lineTo(-dialogWidth / 2, dialogHeight / 2);
+    bg.lineTo(-dialogWidth / 2 + cornerSize, dialogHeight / 2);
     bg.strokePath();
 
     // Bottom-right corner detail
     bg.beginPath();
-    bg.moveTo(250, 120);
-    bg.lineTo(220, 120);
-    bg.lineTo(220, 150);
+    bg.moveTo(dialogWidth / 2, dialogHeight / 2 - cornerSize);
+    bg.lineTo(dialogWidth / 2, dialogHeight / 2);
+    bg.lineTo(dialogWidth / 2 - cornerSize, dialogHeight / 2);
     bg.strokePath();
 
-    // Add header bar
-    const headerBg = this.add.rectangle(0, -120, 500, 30, 0x001a1a, 1);
+    // Add header bar with responsive sizing
+    const headerHeight = Math.min(30, dialogHeight * 0.1);
+    const headerBg = this.add.rectangle(
+      0,
+      -dialogHeight / 2 + headerHeight / 2,
+      dialogWidth,
+      headerHeight,
+      0x001a1a,
+      1
+    );
+
     const headerText = this.add
-      .text(0, -120, "SYSTEM WARNING", {
+      .text(0, -dialogHeight / 2 + headerHeight / 2, "SYSTEM WARNING", {
         fontFamily: "Courier New",
-        fontSize: "20px",
+        fontSize: titleSize + "px",
         fill: "#00ffaa",
         align: "center",
       })
@@ -526,12 +1058,12 @@ class GameScene extends Phaser.Scene {
 
     // Add system prompt text using a typewriter effect
     const warningText = this.add
-      .text(0, -40, "", {
+      .text(0, -dialogHeight / 4, "", {
         fontFamily: "Courier New",
-        fontSize: "24px",
+        fontSize: textSize + "px",
         fill: "#ff3300",
         align: "center",
-        wordWrap: { width: 450 },
+        wordWrap: { width: dialogWidth - 50 },
       })
       .setOrigin(0.5);
 
@@ -551,32 +1083,43 @@ class GameScene extends Phaser.Scene {
       repeat: displayText.length - 1,
     });
 
+    // Scale button sizes
+    const buttonWidth = Math.min(160, dialogWidth * 0.4);
+    const buttonHeight = Math.min(50, dialogHeight * 0.15);
+
     // Add button style function
     const createCyberButton = (x, y, text, color, callback) => {
       const buttonContainer = this.add.container(x, y);
 
-      // Button shape - angle in radians
+      // Button shape - scaled for screen size
       const buttonShape = this.add.graphics();
       buttonShape.fillStyle(color === "green" ? 0x003300 : 0x330000, 0.9);
       buttonShape.lineStyle(2, color === "green" ? 0x00ff00 : 0xff0000, 1);
 
-      // Draw angled rectangle
+      // Draw angled rectangle with responsive sizing
+      const buttonPoints = [
+        { x: -buttonWidth / 2, y: -buttonHeight / 2 },
+        { x: buttonWidth / 2, y: -buttonHeight / 2 },
+        { x: buttonWidth / 2 + 10 * scaleFactor, y: 0 },
+        { x: buttonWidth / 2, y: buttonHeight / 2 },
+        { x: -buttonWidth / 2, y: buttonHeight / 2 },
+        { x: -buttonWidth / 2 - 10 * scaleFactor, y: 0 },
+      ];
+
       buttonShape.beginPath();
-      buttonShape.moveTo(-80, -20);
-      buttonShape.lineTo(80, -20);
-      buttonShape.lineTo(90, 0);
-      buttonShape.lineTo(80, 20);
-      buttonShape.lineTo(-80, 20);
-      buttonShape.lineTo(-90, 0);
+      buttonShape.moveTo(buttonPoints[0].x, buttonPoints[0].y);
+      for (let i = 1; i < buttonPoints.length; i++) {
+        buttonShape.lineTo(buttonPoints[i].x, buttonPoints[i].y);
+      }
       buttonShape.closePath();
       buttonShape.fillPath();
       buttonShape.strokePath();
 
-      // Button text
+      // Button text with responsive font size
       const buttonText = this.add
         .text(0, 0, text, {
           fontFamily: "Courier New",
-          fontSize: "20px",
+          fontSize: buttonTextSize + "px",
           fill: color === "green" ? "#00ff00" : "#ff0000",
           align: "center",
         })
@@ -588,9 +1131,7 @@ class GameScene extends Phaser.Scene {
       // Make interactive
       buttonShape
         .setInteractive(
-          new Phaser.Geom.Polygon([
-            -80, -20, 80, -20, 90, 0, 80, 20, -80, 20, -90, 0,
-          ]),
+          new Phaser.Geom.Polygon(buttonPoints),
           Phaser.Geom.Polygon.Contains
         )
         .on("pointerover", () => {
@@ -614,10 +1155,14 @@ class GameScene extends Phaser.Scene {
       return buttonContainer;
     };
 
-    // Create confirm and cancel buttons
+    // Responsive button positioning
+    const buttonY = dialogHeight / 3;
+    const buttonSpacing = Math.min(240, dialogWidth * 0.6);
+
+    // Create confirm and cancel buttons with responsive sizing and positioning
     const confirmButton = createCyberButton(
-      -120,
-      80,
+      -buttonSpacing / 2,
+      buttonY,
       "CONFIRM",
       "green",
       () => {
@@ -625,29 +1170,35 @@ class GameScene extends Phaser.Scene {
       }
     );
 
-    const cancelButton = createCyberButton(120, 80, "CANCEL", "red", () => {
-      // Resume timer
-      this.timeManager.isActive = true;
+    const cancelButton = createCyberButton(
+      buttonSpacing / 2,
+      buttonY,
+      "CANCEL",
+      "red",
+      () => {
+        // Resume timer
+        this.timeManager.isActive = true;
 
-      // Close dialog with animation
-      this.tweens.add({
-        targets: this.confirmDialog,
-        alpha: 0,
-        y: this.scale.height / 2 + 20,
-        duration: 300,
-        ease: "Power2",
-        onComplete: () => {
-          this.confirmDialog.destroy();
-          this.confirmDialog = null;
-        },
-      });
-    });
+        // Close dialog with animation
+        this.tweens.add({
+          targets: this.confirmDialog,
+          alpha: 0,
+          y: this.scale.height / 2 + 20,
+          duration: 300,
+          ease: "Power2",
+          onComplete: () => {
+            this.confirmDialog.destroy();
+            this.confirmDialog = null;
+          },
+        });
+      }
+    );
 
-    // Add a blinking cursor for immersion
+    // Add a blinking cursor for immersion - scaled for screen size
     const cursor = this.add
-      .text(0, 30, "_", {
+      .text(0, 0, "_", {
         fontFamily: "Courier New",
-        fontSize: "24px",
+        fontSize: textSize + "px",
         fill: "#00ffaa",
       })
       .setOrigin(0.5);
@@ -711,6 +1262,8 @@ class GameScene extends Phaser.Scene {
         }
       )
       .setOrigin(0.5);
+
+    this.events.emit("gameOver");
 
     // Shake camera
     this.cameras.main.shake(500, 0.05);
@@ -776,9 +1329,13 @@ class GameScene extends Phaser.Scene {
     }
   }
 
+  // Updating NetworkDevice sizing in the NetworkDevice class
   addGlowEffect(gameObject) {
     const glowGraphics = this.add.graphics();
     const glowColor = 0x00ff00;
+
+    // Calculate glow radius based on device scale
+    const glowRadius = gameObject.displayWidth * 0.6;
 
     this.tweens.add({
       targets: glowGraphics,
@@ -789,11 +1346,7 @@ class GameScene extends Phaser.Scene {
       onUpdate: () => {
         glowGraphics.clear();
         glowGraphics.lineStyle(2, glowColor, glowGraphics.alpha);
-        glowGraphics.strokeCircle(
-          gameObject.x,
-          gameObject.y,
-          gameObject.displayWidth * 0.6
-        );
+        glowGraphics.strokeCircle(gameObject.x, gameObject.y, glowRadius);
       },
     });
   }
@@ -867,64 +1420,6 @@ class GameScene extends Phaser.Scene {
 
   // Add this to your GameScene.js file's create() method after initializing other components
 
-  initializeNetworkComponents() {
-    // Create and initialize network tutorial overlay
-    this.networkTutorial = new NetworkTutorialOverlay(this);
-
-    // Create help button for network configuration - aligned with exit button
-    const helpButton = this.add
-      .text(this.scale.width - 80, 140, "?", {
-        // Updated Y position to 140 (exit button at 50 + 90px spacing)
-        fontSize: "32px",
-        fontStyle: "bold",
-        backgroundColor: "#004466",
-        padding: { x: 12, y: 8 },
-        borderRadius: 15,
-        fill: "#00ffff",
-      })
-      .setOrigin(0.5)
-      .setInteractive()
-      .setDepth(101);
-
-    // Add hover effects
-    helpButton.on("pointerover", () => {
-      helpButton.setScale(1.1);
-      helpButton.setBackgroundColor("#006699");
-    });
-
-    helpButton.on("pointerout", () => {
-      helpButton.setScale(1);
-      helpButton.setBackgroundColor("#004466");
-    });
-
-    // Show network tutorial when clicked
-    helpButton.on("pointerdown", () => {
-      this.networkTutorial.showTutorial();
-    });
-
-    // Add help text - positioned just below the button
-    const helpText = this.add
-      .text(this.scale.width - 80, 170, "Network Guide", {
-        // Text positioned 30px below button center
-        fontSize: "12px",
-        fill: "#ffffff",
-      })
-      .setOrigin(0.5)
-      .setDepth(101);
-
-    // Show tutorial on first load
-    this.time.delayedCall(1000, () => {
-      // Only show tutorial automatically if no devices are configured yet
-      if (
-        this.pathManager &&
-        !this.pathManager.isPathValid() &&
-        this.pathManager.currentPath.length === 0
-      ) {
-        this.networkTutorial.showTutorial();
-      }
-    });
-  }
-
   // Add to GameScene's update method
 
   handleNetworkStatus() {
@@ -982,97 +1477,66 @@ class GameScene extends Phaser.Scene {
     }
   }
 
-  initializeEncryptionGuide() {
-    // Create and initialize encryption guide overlay
-    this.encryptionGuide = new EncryptionGuideOverlay(this);
-
-    // Create help button for encryption guide - aligned with other buttons
-    const encryptHelpButton = this.add
-      .text(this.scale.width - 80, 230, "?", {
-        // Updated Y position to 230 (network button at 140 + 90px spacing)
-        fontSize: "32px",
-        fontStyle: "bold",
-        backgroundColor: "#440066",
-        padding: { x: 12, y: 8 },
-        borderRadius: 15,
-        fill: "#ff00ff",
-      })
-      .setOrigin(0.5)
-      .setInteractive()
-      .setDepth(101);
-
-    // Add hover effects
-    encryptHelpButton.on("pointerover", () => {
-      encryptHelpButton.setScale(1.1);
-      encryptHelpButton.setBackgroundColor("#660099");
-    });
-
-    encryptHelpButton.on("pointerout", () => {
-      encryptHelpButton.setScale(1);
-      encryptHelpButton.setBackgroundColor("#440066");
-    });
-
-    // Show encryption guide when clicked
-    encryptHelpButton.on("pointerdown", () => {
-      this.encryptionGuide.showTutorial();
-    });
-
-    // Add help text - positioned just below the button
-    const encryptHelpText = this.add
-      .text(this.scale.width - 80, 260, "Encryption Guide", {
-        // Text positioned 30px below button center
-        fontSize: "12px",
-        fill: "#ffffff",
-      })
-      .setOrigin(0.5)
-      .setDepth(101);
-
-    // Store references
-    this.encryptHelpButton = encryptHelpButton;
-    this.encryptHelpText = encryptHelpText;
-  }
-
   // Add this method to show a hint about the encryption guide
   showEncryptionGuideHint() {
     // Only show once
     if (this.encryptionHintShown) return;
     this.encryptionHintShown = true;
 
-    // Create hint message
+    // Calculate responsive sizes
+    const scaleFactor = Math.min(
+      this.scale.width / 1280,
+      this.scale.height / 720
+    );
+    const fontSize = Math.max(14, 16 * scaleFactor);
+
+    // Create hint message with responsive sizing
     const hintText = this.add
       .text(
         this.scale.width / 2,
-        150,
+        150 * scaleFactor,
         "Ready to send encrypted messages! Check the Encryption Guide for help.",
         {
-          fontSize: "16px",
+          fontSize: fontSize + "px",
           fill: "#ff00ff",
           backgroundColor: "#330033",
-          padding: { x: 10, y: 5 },
+          padding: {
+            x: 10 * scaleFactor,
+            y: 5 * scaleFactor,
+          },
         }
       )
       .setOrigin(0.5)
       .setDepth(100);
 
+    // Calculate arrow coordinates based on encryption button position
+    const arrowEndX = this.encryptHelpButton
+      ? this.encryptHelpButton.x
+      : this.uiButtonX;
+    const arrowEndY = this.encryptHelpButton
+      ? this.encryptHelpButton.y
+      : 50 * scaleFactor + this.buttonSpacing * 2;
+
     // Add an arrow pointing to the encryption guide button
     const arrow = this.add.graphics().setDepth(100);
-    arrow.lineStyle(3, 0xff00ff, 1);
+    arrow.lineStyle(3 * scaleFactor, 0xff00ff, 1);
     arrow.lineBetween(
-      this.scale.width / 2 + 200,
-      150,
-      this.scale.width - 100,
-      230 // Update Y coordinate to point to the new button position
+      this.scale.width / 2 + 200 * scaleFactor,
+      150 * scaleFactor,
+      arrowEndX - 20 * scaleFactor,
+      arrowEndY
     );
 
-    // Add arrowhead
+    // Add arrowhead scaled for screen size
+    const arrowHeadSize = 10 * scaleFactor;
     arrow.fillStyle(0xff00ff, 1);
     arrow.fillTriangle(
-      this.scale.width - 100,
-      230, // Update Y coordinate for arrowhead
-      this.scale.width - 110,
-      220, // Update Y coordinates for arrowhead points
-      this.scale.width - 90,
-      220 // Update Y coordinates for arrowhead points
+      arrowEndX - 20 * scaleFactor,
+      arrowEndY,
+      arrowEndX - 20 * scaleFactor - arrowHeadSize,
+      arrowEndY - arrowHeadSize,
+      arrowEndX - 20 * scaleFactor - arrowHeadSize,
+      arrowEndY + arrowHeadSize
     );
 
     // Store references to ensure proper cleanup
@@ -1099,26 +1563,31 @@ class GameScene extends Phaser.Scene {
     this.encryptionHintTween = fadeTween;
 
     // Flash the encryption help button to draw attention
-    const buttonTween = this.tweens.add({
-      targets: this.encryptHelpButton,
-      scale: { from: 1, to: 1.2 },
-      duration: 500,
-      yoyo: true,
-      repeat: 3,
-      ease: "Sine.easeInOut",
-      onComplete: () => {
-        // Reset button scale
-        if (this.encryptHelpButton) {
-          this.encryptHelpButton.setScale(1);
-        }
-      },
-    });
+    if (this.encryptHelpButton) {
+      const buttonTween = this.tweens.add({
+        targets: this.encryptHelpButton,
+        scale: { from: 1, to: 1.2 },
+        duration: 500,
+        yoyo: true,
+        repeat: 3,
+        ease: "Sine.easeInOut",
+        onComplete: () => {
+          // Reset button scale
+          if (this.encryptHelpButton) {
+            this.encryptHelpButton.setScale(1);
+          }
+        },
+      });
 
-    // Also store this tween reference
-    this.encryptHelpButtonTween = buttonTween;
+      // Also store this tween reference
+      this.encryptHelpButtonTween = buttonTween;
+    }
   }
   // Updated update method for GameScene.js that fixes the interaction issue
   // Add this to your GameScene.js file
+
+  // Update method to handle responsiveness during gameplay
+  // In GameScene.js, replace the entire obstacle checking section in the update() method with this improved version:
 
   update() {
     this.defender.update(this.keys, this.MessageHandler.menuActive);
@@ -1134,6 +1603,11 @@ class GameScene extends Phaser.Scene {
 
     // Find the nearest obstacle and check if player is near any obstacle
     this.obstacles.children.iterate((obstacle) => {
+      // Calculate the interaction distance dynamically based on sprite sizes
+      // This takes into account both the defender and device sizes
+      const interactionDistance =
+        this.defender.width * 0.5 + obstacle.width * 0.5 + 10; // Added a small buffer
+
       const distance = Phaser.Math.Distance.Between(
         this.defender.x,
         this.defender.y,
@@ -1141,7 +1615,7 @@ class GameScene extends Phaser.Scene {
         obstacle.y
       );
 
-      if (distance < 100) {
+      if (distance < interactionDistance) {
         this.nearObstacle = true;
 
         // Track the nearest obstacle
@@ -1154,7 +1628,7 @@ class GameScene extends Phaser.Scene {
 
     // Show interaction prompt when near an obstacle
     if (this.nearObstacle && !this.MessageHandler.menuActive) {
-      // Position the prompt near the player and obstacle
+      // Position the prompt near the nearest obstacle
       this.interactText.setPosition(
         nearestObstacle ? nearestObstacle.x : this.defender.x,
         (nearestObstacle ? nearestObstacle.y : this.defender.y) - 50
@@ -1180,8 +1654,43 @@ class GameScene extends Phaser.Scene {
       }
 
       this.interactText.setVisible(true);
+
+      // Create or update a highlight circle around the nearest device
+      if (!this.interactionHighlight) {
+        this.interactionHighlight = this.add
+          .circle(
+            nearestObstacle.x,
+            nearestObstacle.y,
+            nearestObstacle.width * 0.7,
+            0x00ff00,
+            0.3
+          )
+          .setDepth(5);
+
+        // Add pulsing animation
+        this.tweens.add({
+          targets: this.interactionHighlight,
+          alpha: { from: 0.3, to: 0.6 },
+          scale: { from: 1, to: 1.2 },
+          duration: 800,
+          yoyo: true,
+          repeat: -1,
+        });
+      } else {
+        // Update position if highlight already exists
+        this.interactionHighlight.setPosition(
+          nearestObstacle.x,
+          nearestObstacle.y
+        );
+        this.interactionHighlight.setVisible(true);
+      }
     } else {
       this.interactText.setVisible(false);
+
+      // Hide highlight when not near any device
+      if (this.interactionHighlight) {
+        this.interactionHighlight.setVisible(false);
+      }
     }
 
     // Show the context-specific menu when E is pressed near an obstacle
