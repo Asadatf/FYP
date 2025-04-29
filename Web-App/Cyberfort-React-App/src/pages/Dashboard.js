@@ -7,10 +7,11 @@ import { Link } from 'react-router-dom';
 const Dashboard = () => {
 
   const [games, setGames] = useState([]);
+  const [quizzes, setquizzes] = useState([])
   const [loading, setLoading] = useState(true);
   const [userData] = useState({
-    name: "Asad Tariq",
-    email: "asad@mail.com",
+    name: '',
+    email: ''
   });
 
   useEffect(() => {
@@ -19,22 +20,11 @@ const Dashboard = () => {
         const response = await fetch("http://localhost:5500/api/games/getgames?is_active=1");
         const data = await response.json(); // Convert response to JSON
 
-        // Transform Google Drive URLs if needed
-      const gamesWithFixedImages = data.games.map(game => {
-        if (game.game_thumbnail && game.game_thumbnail.includes('drive.google.com/file/d/')) {
-          // Extract the file ID
-          const fileIdMatch = game.game_thumbnail.match(/\/d\/(.+?)\/view/);
-          if (fileIdMatch && fileIdMatch[1]) {
-            // Create direct image URL
-            game.game_thumbnail = `https://drive.google.com/uc?export=view&id=${fileIdMatch[1]}`;
-          }
-        }
-        return game;
-      });
-
-
+        const qresponse = await fetch("http://localhost:5500/api/quiz/getquizzes");
+        const qdata = await qresponse.json(); // Convert response to JSON
         setGames(data.games); // Store games in state
-        console.log(data.games[2].game_thumbnail)
+        setquizzes(qdata.quizzes)
+        console.log("hello")
       } catch (err) {
         console.error("Failed to fetch games:", err);
       } finally {
@@ -47,70 +37,34 @@ const Dashboard = () => {
 
   if (loading) return <p>Loading games...</p>;
 
-//   const games = [
-//     {
-//       id: 1,
-//       title: "Network Defender",
-//       description: "Learn to protect networks and systems from cyber attacks",
-//       image: titleBackground,
-//       url: "/Games/Network_Defender/ND_frontend/index.html",
-//     },
-//     {
-//       id: 2,
-//       title: "Phishing Awareness",
-//       description: "Train yourself to identify and avoid phishing attempts",
-//       image: phishingThumbnail,
-//       url: "/Games/Phishing_game_Latest/PhishingAwareness",
-//     },
-//     {
-//       id: 3,
-//       title: "CyberFortress",
-//       description: "Train yourself to identify attacks and their defences",
-//       image: firewallthumbnail,
-//       url: "/Games/Cyber_fortress/index.html",
-//     },
-//   ];
 
-  const quizzes = [
-    {
-      id: 1,
-      title: "Network Security Fundamentals",
-      description: "Test your knowledge of basic network security concepts",
-      difficulty: "Beginner",
-      questions: 10,
-      timeEstimate: "15 min",
-      completion: 0,
-    },
-    {
-      id: 2,
-      title: "Phishing Attack Recognition",
-      description: "Identify common phishing techniques and prevention methods",
-      difficulty: "Intermediate",
-      questions: 15,
-      timeEstimate: "20 min",
-      completion: 75,
-    },
-    {
-      id: 3,
-      title: "Advanced Malware Analysis",
-      description:
-        "Test your knowledge of malware types and analysis techniques",
-      difficulty: "Advanced",
-      questions: 20,
-      timeEstimate: "30 min",
-      completion: 25,
-    },
-    {
-      id: 4,
-      title: "Industrial Espionage & Cyber Warfare",
-      description:
-        "Learn about advanced cyber threats, state-sponsored attacks, and information warfare",
-      difficulty: "Intermediate",
-      questions: 10,
-      timeEstimate: "20 min",
-      completion: 0,
-    },
-  ];
+
+
+  
+
+  
+
+  // const quizzesq = [
+  //   {
+  //     id: 1,
+  //     title: 'Network Security Fundamentals',
+  //     description: 'Test your knowledge of basic network security concepts',
+  //     difficulty: 'Beginner',
+  //     questions: 10,
+  //     timeEstimate: 15,
+  //     completion: 0
+  //   },
+  //   {
+  //     id: 2,
+  //     title: 'Phishing Attack Recognition',
+  //     description: 'Identify common phishing techniques and prevention methods',
+  //     difficulty: 'Intermediate',
+  //     questions: 15,
+  //     timeEstimate: 20,
+  //     completion: 75
+  //   },
+  // ];
+
 
   return (
     <>

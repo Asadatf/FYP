@@ -361,7 +361,7 @@ const Quiz = () => {
                     <div className="d-flex flex-column flex-sm-row gap-16 justify-content-center">
                       <button
                         onClick={handleReturnToDashboard}
-                        className={`btn btn-${difficultyColor} rounded-pill px-32 py-12`}
+                        className="btn btn-outline-secondary rounded-pill px-32 py-12"
                       >
                         <i className="ph ph-arrow-left me-8"></i>
                         Return to Dashboard
@@ -849,11 +849,12 @@ const Quiz = () => {
 
                       <div className="d-flex gap-16">
                         <button
-                          className="btn btn-main rounded-pill px-20 py-10"
+                          className="btn btn-outline-secondary rounded-pill px-20 py-10"
                           onClick={handlePreviousQuestion}
+                          disabled={currentQuestionIndex === 0}
                         >
+                          <i className="ph ph-arrow-left me-8"></i>
                           Previous
-                          <i className="ph ph-arrow-right ms-8"></i>
                         </button>
 
                         {currentQuestionIndex < quiz.questions.length - 1 ? (

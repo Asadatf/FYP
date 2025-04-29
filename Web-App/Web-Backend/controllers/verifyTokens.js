@@ -13,7 +13,10 @@ export const verifyToken = (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET); // Verify the token
     req.user = decoded; // Attach user data to request
     console.log(req.user)
-    return res.status(200).json({ error: 'Token verfied' });
+    return res.status(200).json({
+      message: 'Token verified',
+      user: req.user, // this includes user_id and email
+    });
     // next(); // Move to next middleware or route handler
   } catch (error) {
     console.log(error)
