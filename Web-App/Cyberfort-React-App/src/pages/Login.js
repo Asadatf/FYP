@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageBanner from '../components/PageBanner';
 
@@ -8,8 +8,7 @@ const Login = () => {
     email: '',
     password: '',
     rememberMe: false
-  })
-
+  });
 
   const [signupData, setSignupData] = useState({
     email: '',
@@ -19,44 +18,44 @@ const Login = () => {
   });
 
   // Form status state
-  // const [loginErrors, setLoginErrors] = useState({});
-  // const [signupErrors, setSignupErrors] = useState({});
-  // const [loginApiError, setLoginApiError] = useState('');
-  // const [signupApiError, setSignupApiError] = useState('');
   const [isLoginLoading, setIsLoginLoading] = useState(false);
   const [isSignupLoading, setIsSignupLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [signupshowPassword, setsignupShowPassword] = useState(false);
   const [csignupshowPassword, setcsignupShowPassword] = useState(false);
 
-  // // Check if user is already logged in
-  // useEffect(() => {
-  //   const token = localStorage.getItem('token');
-  //   if (token) {
-  //     // Verify token with backend
-  //     const verifyToken = async () => {
-  //       try {
-  //         const response = await fetch('http://localhost:5000/api/user/verify-token', {
-  //           method: 'GET',
-  //           headers: {
-  //             'Authorization': `Bearer ${token}`
-  //           }
-  //         });
-
-  //         if (response.ok) {
-  //           // User is already logged in, redirect to dashboard
-  //           navigate('/dashboard');
-  //         }
-  //       } catch (error) {
-  //         console.error('Token verification failed:', error);
-  //         // Token verification failed, stay on login page
-  //       }
-  //     };
-
-  //     verifyToken();
-  //   }
-  // }, [navigate]);
-
+  // Add this effect to prevent back navigation after logout
+  useEffect(() => {
+    // This prevents back button navigation after logout
+    window.history.pushState(null, null, window.location.href);
+    
+    const handlePopState = () => {
+      window.history.pushState(null, null, window.location.href);
+    };
+    
+    window.addEventListener('popstate', handlePopState);
+    
+    // Check if user came from logout
+    const params = new URLSearchParams(window.location.search);
+    const loggedOut = params.get('logged_out');
+    
+    if (loggedOut) {
+      // Clear any authentication data
+      localStorage.removeItem('token');
+      sessionStorage.removeItem('token');
+    } else {
+      // Check if user is already logged in
+      const token = localStorage.getItem('token');
+      if (token) {
+        // Redirect to dashboard if token exists
+        navigate('/dashboard', { replace: true });
+      }
+    }
+    
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [navigate]);
 
   // Handle login input changes
   const handleLoginChange = (e) => {
@@ -67,7 +66,6 @@ const Login = () => {
     });
   };
 
-
   // Handle signup input changes
   const handleSignupChange = (e) => {
     const { name, value } = e.target;
@@ -77,7 +75,6 @@ const Login = () => {
     });
   };
 
-
   // Validate login form
   const validateLoginForm = () => {
     let tempErrors = {};
@@ -85,7 +82,7 @@ const Login = () => {
 
     if (!loginData.email) {
       tempErrors.email = 'Email is required';
-      alert(tempErrors.email)
+      alert(tempErrors.email);
       isValid = false;
       navigate('/login');
       window.location.reload();
@@ -94,7 +91,7 @@ const Login = () => {
 
     if (!loginData.password) {
       tempErrors.password = 'Password is required';
-      alert(tempErrors.password)
+      alert(tempErrors.password);
       isValid = false;
       navigate('/login');
       window.location.reload();
@@ -109,19 +106,18 @@ const Login = () => {
     let isValid = true;
 
     if (!signupData.email) {
-      console.log(signupData.email)
+      console.log(signupData.email);
       tempErrors.email = 'Email is required';
-      alert(tempErrors.email)
-      console.log(tempErrors.email)
+      alert(tempErrors.email);
+      console.log(tempErrors.email);
       isValid = false;
       navigate('/login');
       window.location.reload();
       return;
     } else if (!/\S+@\S+\.\S+/.test(signupData.email)) {
       tempErrors.email = 'Email is invalid';
-      console.log(tempErrors.email)
-
-      alert(tempErrors.email)
+      console.log(tempErrors.email);
+      alert(tempErrors.email);
       isValid = false;
       navigate('/login');
       window.location.reload();
@@ -129,10 +125,10 @@ const Login = () => {
     }
 
     if (!signupData.username) {
-      console.log(signupData.username)
+      console.log(signupData.username);
       tempErrors.username = 'Username is required';
-      alert(tempErrors.username)
-      console.log(tempErrors.username)
+      alert(tempErrors.username);
+      console.log(tempErrors.username);
       isValid = false;
       navigate('/login');
       window.location.reload();
@@ -140,18 +136,18 @@ const Login = () => {
     }
 
     if (!signupData.password) {
-      console.log(signupData.password)
+      console.log(signupData.password);
       tempErrors.password = 'Password is required';
-      console.log(tempErrors.password)
-      alert(tempErrors.password)
+      console.log(tempErrors.password);
+      alert(tempErrors.password);
       isValid = false;
       navigate('/login');
       window.location.reload();
       return;
     } else if (signupData.password.length < 6) {
       tempErrors.password = 'Password must be at least 6 characters';
-      console.log(tempErrors.password)
-      alert(tempErrors.password)
+      console.log(tempErrors.password);
+      alert(tempErrors.password);
       isValid = false;
       navigate('/login');
       window.location.reload();
@@ -160,8 +156,8 @@ const Login = () => {
 
     if (signupData.password !== signupData.confirmPassword) {
       tempErrors.confirmPassword = "Passwords don't match";
-      console.log(tempErrors.confirmPassword)
-      alert(tempErrors.confirmPassword)
+      console.log(tempErrors.confirmPassword);
+      alert(tempErrors.confirmPassword);
       isValid = false;
       navigate('/login');
       window.location.reload();
@@ -169,11 +165,10 @@ const Login = () => {
     }
     return isValid;
   };
-  //Const handleSignup
 
   const handleSignupSubmit = async (e) => {
     e.preventDefault();
-    console.log("signup called")
+    console.log("signup called");
 
     // Validate form
     if (!validateSignupForm()) {
@@ -205,19 +200,12 @@ const Login = () => {
       localStorage.setItem('token', data.token);
 
       // Redirect to dashboard
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true });
     } catch (error) {
       alert(error);
       setIsSignupLoading(false);
     }
   };
-
-
-
-
-
-
-
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
@@ -247,14 +235,14 @@ const Login = () => {
         throw new Error(data.error || 'Login failed');
       }
       else {
-        console.log("successfully logged in")
+        console.log("successfully logged in");
       }
 
       // Store token in localStorage
       localStorage.setItem('token', data.token);
 
-      // Redirect to dashboard
-      navigate('/dashboard');
+      // Redirect to dashboard with replace:true to prevent back button
+      navigate('/dashboard', { replace: true });
     } catch (error) {
       console.log(error.message);
       alert(error.message);
@@ -264,16 +252,6 @@ const Login = () => {
       setIsLoginLoading(false);
     }
   };
-
-
-
-
-
-
-
-
-
-
 
   return (
     <>
@@ -508,9 +486,6 @@ const Login = () => {
         </div>
       </div>
       {/* // Login & Register End */}
-
-
-
     </>
   );
 };

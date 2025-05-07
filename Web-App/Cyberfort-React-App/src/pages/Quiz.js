@@ -732,7 +732,7 @@ const Quiz = () => {
                         Question {currentQuestionIndex + 1}
                       </h4>
                       <button
-                        className={`btn btn-sm ${
+                        className={`btn btn-warning ${
                           flaggedQuestions.includes(currentQuestionIndex)
                             ? "btn-warning"
                             : "btn-outline-warning"
@@ -744,7 +744,7 @@ const Quiz = () => {
                         <i className="ph ph-flag me-8"></i>
                         {flaggedQuestions.includes(currentQuestionIndex)
                           ? "Flagged"
-                          : "Flag for Review"}
+                          : "Flag for Review11"}
                       </button>
                     </div>
 

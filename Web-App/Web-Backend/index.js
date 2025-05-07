@@ -11,6 +11,7 @@ import userRoute from './routes/user.js'
 import authRoute from './routes/authroute.js'
 import gameroute from './routes/gamesroute.js'
 import quizroute from './routes/quizroute.js'
+import scoreroute from './routes/gamescoreroute.js'
 
 dotenv.config();
 
@@ -25,7 +26,8 @@ app.use(cors())
 app.use("/api/user", userRoute);
 app.use("/api/auth", authRoute);
 app.use("/api/games", gameroute);
-app.use("/api/quiz",quizroute);
+app.use("/api/quiz", quizroute);
+app.use("/api/gamesscore", scoreroute)
 
 
 

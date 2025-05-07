@@ -120,7 +120,7 @@ export const generate_quiz = async (req, res) => {
     // Make sure we have a valid model name - "gemini-1.0-pro" or "gemini-1.5-pro" for newer version
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
     
-    const prompt = `Generate a quiz about ${topic} at ${difficulty} level with ${numberOfQuestions} multiple choice questions.
+    const prompt = `Generate a quiz about ${topic} at ${difficulty} level with ${numberOfQuestions} multiple choice questions.Give new questions not the previous ones.
 Each question should have 4 options with only 1 correct answer.
 Return ONLY valid JSON with this exact structure, no other text:
 {
@@ -276,5 +276,58 @@ export const validate_quiz = async (req, res) => {
   } catch (error) {
     console.error('Error validating quiz:', error);
     res.status(500).json({ error: "Failed to validate quiz" });
+  }
+};
+
+
+export const saveQuiz = (req, res) => {
+  try {
+    // Extract parameters from request
+    const quizId = req.query.quizId;
+    const userId = req.query.userId;
+    const score = req.body.score;
+    const passed = req.body.passed || false;
+    
+    
+    // SQL query to insert quiz attempt
+    const query = `
+      INSERT INTO QUIZ_ATTEMPTS (
+        user_id, 
+        quiz_id,
+        score, 
+        passed
+      ) 
+      VALUES ($1, $2, $3, $4)
+      RETURNING *
+    `;
+    
+    // Parameters for the query
+    const values = [userId, quizId, score, passed];
+    
+    // Execute query
+    db.query(query, values, (err, result) => {
+      if (err) {
+        console.error('Error saving quiz attempt:', err);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to save quiz attempt',
+          error: err.message
+        });
+      }
+      
+      // Return success response with saved data
+      return res.status(201).json({
+        success: true,
+        message: 'Quiz attempt saved successfully',
+        data: result.rows[0]
+      });
+    });
+  } catch (error) {
+    console.error('Error in saveQuiz function:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
   }
 };

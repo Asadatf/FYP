@@ -3740,7 +3740,7 @@ select {
 }
 
 .tech-hero-section-10 .hero-content .title {
-  font-size: 70px;
+  font-size: 65px;
   line-height: 90px;
   text-transform: uppercase;
   color: #ffffff;
@@ -3764,7 +3764,7 @@ select {
   margin-top: 50px;
   background: #005de0;
   border: 2px solid #005de0;
-  padding: 0 70px;
+  padding: 21px 70px;
 }
 
 .tech-hero-section-10 .hero-content .btn:hover {

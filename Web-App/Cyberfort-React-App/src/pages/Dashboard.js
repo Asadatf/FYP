@@ -1,18 +1,43 @@
-import React, { useState,useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import titleBackground from '../assets/images/titleBackground.jpeg.jpg';
 import phishingThumbnail from '../assets/images/phishing_thumbnail.jpg';
 import firewallthumbnail from '../assets/images/firewall-thumbnail.jpg';
 import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
 
   const [games, setGames] = useState([]);
-  const [quizzes, setquizzes] = useState([])
+  const [quizzes, setquizzes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userData] = useState({
     name: '',
     email: ''
   });
+
+  // Add authentication check
+  useEffect(() => {
+    // Check if user is authenticated
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      // No token found, redirect to login page
+      navigate('/login?logged_out=true', { replace: true });
+      return;
+    }
+    
+    // Prevent back button navigation
+    window.history.pushState(null, null, window.location.href);
+    const handlePopState = () => {
+      window.history.pushState(null, null, window.location.href);
+    };
+    window.addEventListener('popstate', handlePopState);
+    
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [navigate]);
 
   useEffect(() => {
     const fetchGames = async () => {
@@ -23,8 +48,8 @@ const Dashboard = () => {
         const qresponse = await fetch("http://localhost:5500/api/quiz/getquizzes");
         const qdata = await qresponse.json(); // Convert response to JSON
         setGames(data.games); // Store games in state
-        setquizzes(qdata.quizzes)
-        console.log("hello")
+        setquizzes(qdata.quizzes);
+        console.log("hello");
       } catch (err) {
         console.error("Failed to fetch games:", err);
       } finally {
@@ -35,36 +60,16 @@ const Dashboard = () => {
     fetchGames();
   }, []);
 
+  // Add logout function
+  const handleLogout = () => {
+    // Clear authentication token
+    localStorage.removeItem('token');
+    
+    // Redirect to login page
+    navigate('/login?logged_out=true', { replace: true });
+  };
+
   if (loading) return <p>Loading games...</p>;
-
-
-
-
-  
-
-  
-
-  // const quizzesq = [
-  //   {
-  //     id: 1,
-  //     title: 'Network Security Fundamentals',
-  //     description: 'Test your knowledge of basic network security concepts',
-  //     difficulty: 'Beginner',
-  //     questions: 10,
-  //     timeEstimate: 15,
-  //     completion: 0
-  //   },
-  //   {
-  //     id: 2,
-  //     title: 'Phishing Attack Recognition',
-  //     description: 'Identify common phishing techniques and prevention methods',
-  //     difficulty: 'Intermediate',
-  //     questions: 15,
-  //     timeEstimate: 20,
-  //     completion: 75
-  //   },
-  // ];
-
 
   return (
     <>
@@ -82,9 +87,19 @@ const Dashboard = () => {
                     Continue your cybersecurity learning journey
                   </p>
                 </div>
-                <div className="stats-card bg-white bg-opacity-10 p-16 rounded-12">
-                  <p className="text-white mb-4 fw-medium">Your Progress</p>
-                  <h4 className="text-white mb-0">75% Complete</h4>
+                <div className="d-flex align-items-center gap-16">
+                  <div className="stats-card bg-white bg-opacity-10 p-16 rounded-12">
+                    <p className="text-white mb-4 fw-medium">Your Progress</p>
+                    <h4 className="text-white mb-0">75% Complete</h4>
+                  </div>
+                  {/* Add logout button */}
+                  <button 
+                    onClick={handleLogout} 
+                    className="btn btn-light rounded-pill py-10 px-20"
+                  >
+                    Logout
+                    <i className="ph ph-sign-out ms-8"></i>
+                  </button>
                 </div>
               </div>
             </div>
@@ -143,7 +158,7 @@ const Dashboard = () => {
                                     Completion
                                   </span>
                                   <span className="text-main-600 fw-bold">
-                                    62%
+                                    32%
                                   </span>
                                 </div>
                                 <div
@@ -153,7 +168,7 @@ const Dashboard = () => {
                                   <div
                                     className="progress-bar bg-main-600"
                                     role="progressbar"
-                                    style={{ width: "62%" }}
+                                    style={{ width: "50%" }}
                                   ></div>
                                 </div>
                               </div>

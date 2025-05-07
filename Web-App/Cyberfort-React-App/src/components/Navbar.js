@@ -41,7 +41,7 @@ const Navbar = () => {
       console.log("Local storage cleared");
 
       // Redirect to sign-in page
-      navigate('/login');
+      window.location.href = '/login'
     } catch (error) {
       console.error('Logout failed:', error);
       // Still redirect to sign-in even if the API call fails

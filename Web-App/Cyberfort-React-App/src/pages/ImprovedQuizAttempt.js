@@ -18,6 +18,7 @@ const ImprovedQuizAttempt = () => {
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [quizResult, setQuizResult] = useState(null);
   const [showExplanation, setShowExplanation] = useState(false);
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   
   // Fetch quiz metadata from the server
   useEffect(() => {
@@ -160,6 +161,8 @@ const ImprovedQuizAttempt = () => {
       setCurrentQuestionIndex(prevIndex => prevIndex - 1);
     }
   };
+
+  
   
   // Answer and flag management
   const handleAnswerSelection = (questionIndex, optionIndex) => {
@@ -208,8 +211,8 @@ const ImprovedQuizAttempt = () => {
              percentage >= 60 ? 'Satisfactory' : 
              'Needs Improvement',
       passed: percentage >= passingScore
-    });
     
+    });
     setQuizSubmitted(true);
   };
   
@@ -228,6 +231,47 @@ const ImprovedQuizAttempt = () => {
   const handleReturnToDashboard = () => {
     navigate('/');
   };
+
+  const SaveQuizScore = async () => {
+    setIsButtonDisabled(true);
+    const token = localStorage.getItem("token");
+  
+    // Verify token
+    const response = await fetch('http://localhost:5500/api/auth/verifyToken', {
+      method: 'POST',
+      headers: {
+        'auth': `${token}`,
+      },
+    });
+  
+    const data = await response.json();
+  
+    if (response.ok) {
+      console.log(data.user.user_id);
+      console.log("ssssss");
+      console.log(quizInfo.id);
+      console.log(quizResult.percentage);
+  
+      // Save quiz score
+      const res = await fetch(`http://localhost:5500/api/quiz/savequiz?quizId=${quizInfo.id}&userId=${data.user.user_id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json', // Ensure content type is set to JSON
+        },
+        body: JSON.stringify({ // Make sure body is stringified JSON
+          score: quizResult.percentage,
+          passed: true,
+        }),
+      });
+  
+      // You can handle the response if needed, e.g., checking if the quiz score was saved successfully
+      const result = await res.json();
+      console.log(result);
+    } else {
+      console.error("Failed to verify token");
+    }
+  };
+  
   
   // ======== RENDER FUNCTIONS ========
   
@@ -255,7 +299,7 @@ const ImprovedQuizAttempt = () => {
           </div>
           <h4 className="mb-8 text-danger-600">Error Loading Quiz</h4>
           <p className="mb-16 text-gray-600">{error}</p>
-          <button onClick={() => navigate('/')} className="btn btn-outline-primary rounded-pill px-24 py-12">
+          <button onClick={() => navigate('/dashboard')} className="btn btn-outline-primary rounded-pill px-24 py-12">
             <i className="ph ph-arrow-left me-8"></i>
             Return to Dashboard
           </button>
@@ -362,7 +406,7 @@ const ImprovedQuizAttempt = () => {
                     </div>
                     
                     <div className="d-flex flex-column flex-sm-row gap-16 justify-content-center">
-                      <button onClick={handleReturnToDashboard} className="btn btn-outline-secondary rounded-pill px-24 py-12">
+                      <button onClick={handleReturnToDashboard} className={`btn btn-${difficultyColor} rounded-pill px-32 py-12`}>
                         <i className="ph ph-arrow-left me-8"></i>
                         Return to Dashboard
                       </button>
@@ -405,6 +449,9 @@ const ImprovedQuizAttempt = () => {
     const resultColor = quizResult?.percentage >= 90 ? 'success' : 
                         quizResult?.percentage >= 70 ? 'primary' : 
                         quizResult?.percentage >= 60 ? 'warning' : 'danger';
+                        console.log("ye rha uska result");
+                        console.log(quizResult);
+                        
     
     return (
       <div className="quiz-result-wrapper py-48">
@@ -496,6 +543,7 @@ const ImprovedQuizAttempt = () => {
                         Review Answers
                       </button>
                       {quizResult?.passed ? (
+                        <div>
                         <button 
                           className="btn btn-main rounded-pill px-24 py-12"
                           onClick={handleReturnToDashboard}
@@ -503,6 +551,15 @@ const ImprovedQuizAttempt = () => {
                           <i className="ph ph-arrow-right me-8"></i>
                           Back to Dashboard
                         </button>
+                        <button 
+                          className="btn btn-main rounded-pill px-24 py-12"
+                          onClick={SaveQuizScore} disabled={isButtonDisabled}
+                        >
+                          <i className="ph ph-arrow-right me-8"></i>
+                          Save Score
+                        </button>
+
+                        </div>
                       ) : (
                         <button 
                           className="btn btn-danger rounded-pill px-24 py-12"
@@ -629,7 +686,7 @@ const ImprovedQuizAttempt = () => {
                     <div className="d-flex justify-content-between align-items-center mb-24">
                       <h4 className="mb-0">Question {currentQuestionIndex + 1}</h4>
                       <button 
-                        className={`btn btn-sm ${flaggedQuestions.includes(currentQuestionIndex) ? 'btn-warning' : 'btn-outline-warning'} rounded-pill`}
+                        className={`btn btn-warning ${flaggedQuestions.includes(currentQuestionIndex) ? 'btn-warning' : 'btn-outline-warning'} rounded-pill`}
                         onClick={() => toggleFlaggedQuestion(currentQuestionIndex)}
                       >
                         <i className="ph ph-flag me-8"></i>
@@ -706,7 +763,7 @@ const ImprovedQuizAttempt = () => {
                       
                       <div className="d-flex gap-16">
                         <button 
-                          className="btn btn-outline-secondary rounded-pill px-20 py-10"
+                          className="btn btn-main rounded-pill px-20 py-10"
                           onClick={handlePreviousQuestion}
                           disabled={currentQuestionIndex === 0}
                         >
@@ -759,7 +816,7 @@ const ImprovedQuizAttempt = () => {
                         return (
                           <button
                             key={index}
-                            className={`btn ${btnClass} rounded-4 d-flex align-items-center justify-content-center py-10`}
+                            className={`btn ${btnClass}  rounded-4 d-flex align-items-center justify-content-center py-10`}
                             onClick={() => setCurrentQuestionIndex(index)}
                           >
                             {index + 1}
