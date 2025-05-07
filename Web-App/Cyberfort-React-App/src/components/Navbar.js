@@ -7,7 +7,9 @@ const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [user, setUser] = useState({name:"", email:""});
   const dropdownRef = useRef(null);
+
 
 
   const handleLogout = async (e) => {
@@ -39,7 +41,7 @@ const Navbar = () => {
       console.log("Local storage cleared");
 
       // Redirect to sign-in page
-      navigate('/login');
+      window.location.href = '/login'
     } catch (error) {
       console.error('Logout failed:', error);
       // Still redirect to sign-in even if the API call fails
@@ -47,10 +49,6 @@ const Navbar = () => {
       navigate('/login');
     }
   };
-
-
-
-
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -89,15 +87,16 @@ const Navbar = () => {
             <ul className="main-menu">
               <li><Link to="/">Home</Link></li>
               <li><Link to="/about">About Us</Link></li>
-              {!isDashboardPage && !localStorage.getItem("token") && (
-  <li><Link to="/login">Login & Register</Link></li>
-)}
+              {!isDashboardPage && (
+                <li><Link to="/login">Login & Register</Link></li>
+              )}
               <li><Link to="/contact">Contact</Link></li>
             </ul>
           </div>
 
           {/* Conditionally Render Start Learning Button */}
           {!isDashboardPage && (
+            
             <button
               className="btn btn-main"
               onClick={async () => {
@@ -109,9 +108,6 @@ const Navbar = () => {
                     return;
                   }
 
-                  // Set button text to "Checking..." while verification is in progress
-                  // You'll need to add state for this if you want to show loading state
-
                   // Verify token with backend
                   const response = await fetch('http://localhost:5500/api/auth/verifyToken', {
                     method: 'POST',
@@ -119,8 +115,13 @@ const Navbar = () => {
                       'auth': `${token}`
                     }
                   });
-
+                   const data = await response.json();
+                   console.log(data)
                   if (response.ok) {
+                    setUser({
+                      name: data.user.username, // or decodedToken.name
+                      email: data.user.email, // or decodedToken.email
+                    });
                     navigate("/dashboard");
                   } else {
                     localStorage.removeItem("token"); // Clear invalid token
@@ -159,8 +160,8 @@ const Navbar = () => {
                         <div className="flex-align gap-8 mb-20 pb-20 border-bottom border-gray-100">
                           <img src={userImg} alt="User" className="w-54 h-54 rounded-circle" />
                           <div>
-                            <h4 className="mb-0">Asad Tariq</h4>
-                            <p className="fw-medium text-13 text-gray-200">asad@mail.com</p>
+                            <h4 className="mb-0">{user.name}</h4>
+                            <p className="fw-medium text-13 text-gray-200">{user.email}</p>
                           </div>
                         </div>
 

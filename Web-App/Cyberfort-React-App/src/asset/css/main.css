@@ -278,6 +278,7 @@
     background-color: transparent !important;
     border-color: hsl(var(--main)) !important;
     color: hsl(var(--main)) !important;
+    display: none;
 }
 
 .btn-outline-main:hover {
