@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cyber-Fortress</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #000428;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        width: 100vw;
+        overflow: hidden;
+        font-family: Arial, sans-serif;
+      }
+
+      #game-container {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+      }
+
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+    <!-- Import Phaser directly via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+  </head>
+  <body>
+    <div id="game-container"></div>
+
+    <!-- Utility modules -->
+    <script src="src/utils/graphics-utils.js"></script>
+    <script src="src/utils/SoundManager.js"></script>
+    <script src="src/highscore.js"></script>
+
+    <!-- Game scenes -->
+    <script src="src/scenes/BootScene.js"></script>
+    <script src="src/scenes/PreloadScene.js"></script>
+    <script src="src/scenes/MenuScene.js"></script>
+    <script src="src/scenes/GameScene.js"></script>
+    <script src="src/scenes/LevelCompleteScene.js"></script>
+    <script src="src/scenes/GameOverScene.js"></script>
+
+    <!-- Mini-game scenes -->
+    <script src="src/scenes/PortScanMiniGame.js"></script>
+    <script src="src/scenes/PasswordCrackMiniGame.js"></script>
+    <script src="src/scenes/MalwareWhackMiniGame.js"></script>
+    <script src="src/scenes/DDOSMiniGame.js"></script>
+    <script src="src/scenes/RansomwareMiniGame.js"></script>
+    <script src="src/scenes/RootkitMiniGame.js"></script>
+
+    <!-- Main game script -->
+    <script src="src/game.js"></script>
+    <script src="src/main.js"></script>
+  </body>
+</html>

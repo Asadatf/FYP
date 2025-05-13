@@ -1,9 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import titleBackground from '../assets/images/titleBackground.jpeg.jpg';
-import phishingThumbnail from '../assets/images/phishing_thumbnail.jpg';
-import firewallthumbnail from '../assets/images/firewall-thumbnail.jpg';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+
+import { Link } from "react-router-dom";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -11,42 +9,48 @@ const Dashboard = () => {
   const [games, setGames] = useState([]);
   const [quizzes, setquizzes] = useState([]);
   const [loading, setLoading] = useState(true);
+
   const [userData,setuserdata] = useState({
     name: localStorage.getItem('username'),
     email: localStorage.getItem('email')
+
   });
   const [complete, setcomplete] =useState(0);
 
   // Add authentication check
   useEffect(() => {
     // Check if user is authenticated
-    const token = localStorage.getItem('token');
-    
+    const token = localStorage.getItem("token");
+
     if (!token) {
       // No token found, redirect to login page
-      navigate('/login?logged_out=true', { replace: true });
+      navigate("/login?logged_out=true", { replace: true });
       return;
     }
-    
+
     // Prevent back button navigation
     window.history.pushState(null, null, window.location.href);
     const handlePopState = () => {
       window.history.pushState(null, null, window.location.href);
     };
-    window.addEventListener('popstate', handlePopState);
-    
+    window.addEventListener("popstate", handlePopState);
+
     return () => {
-      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener("popstate", handlePopState);
     };
   }, [navigate]);
 
   useEffect(() => {
     const fetchGames = async () => {
       try {
-        const response = await fetch("http://localhost:5500/api/games/getgames?is_active=1");
+        const response = await fetch(
+          "http://localhost:5500/api/games/getgames?is_active=1"
+        );
         const data = await response.json(); // Convert response to JSON
 
-        const qresponse = await fetch("http://localhost:5500/api/quiz/getquizzes");
+        const qresponse = await fetch(
+          "http://localhost:5500/api/quiz/getquizzes"
+        );
         const qdata = await qresponse.json(); // Convert response to JSON
 
 
@@ -71,10 +75,10 @@ const Dashboard = () => {
   // Add logout function
   const handleLogout = () => {
     // Clear authentication token
-    localStorage.removeItem('token');
-    
+    localStorage.removeItem("token");
+
     // Redirect to login page
-    navigate('/login?logged_out=true', { replace: true });
+    navigate("/login?logged_out=true", { replace: true });
   };
 
   if (loading) return <p>Loading games...</p>;
@@ -101,8 +105,8 @@ const Dashboard = () => {
                     <h4 className="text-white mb-0">75% Complete</h4>
                   </div>
                   {/* Add logout button */}
-                  <button 
-                    onClick={handleLogout} 
+                  <button
+                    onClick={handleLogout}
                     className="btn btn-light rounded-pill py-10 px-20"
                   >
                     Logout
@@ -128,22 +132,23 @@ const Dashboard = () => {
                 </div>
                 <div className="card-body p-24">
                   <div className="row g-24">
-
-                    {games.map(game => (
+                    {games.map((game) => (
                       <div key={game.game_id} className="col-md-6 col-lg-4">
                         <div className="card border border-gray-100 h-100 transition-all hover-shadow">
                           <div className="card-body p-0">
                             <div className="position-relative">
                               <div className="bg-main-100 overflow-hidden">
-                              <img 
+                                <img
                                   src={game.game_thumbnail}
-                                  alt={game.title} 
-                                  className="w-100" 
-                                  style={{ height: '180px', objectFit: 'cover' }}
+                                  alt={game.title}
+                                  className="w-100"
+                                  style={{
+                                    height: "180px",
+                                    objectFit: "cover",
+                                  }}
                                 />
-                              
                               </div>
-                              
+
                               <div className="position-absolute top-16 right-16">
                                 <span className="badge bg-main-600 text-white px-12 py-6 rounded-8">
                                   {game.category}
