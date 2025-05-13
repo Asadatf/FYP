@@ -1,16 +1,15 @@
 import db from "../index.js"
 export const saveGameScore = async (req, res) => {
     try {
-      // Extract user_id from the verified token
-      const { user_id } = req.user;
-      
-      // Extract game data from request body
-      const { game_id, score } = req.body;
+      const user_id = req.query.userid;
+    const game_id = req.query.gameid;
+    const { score } = req.body;
       
       // Validate required fields
       if (!game_id || score === undefined) {
         return res.status(400).json({ 
-          error: 'Missing required fields. Game ID and score are required.' 
+          error: 'Missing required fields. Game ID and score are required.',
+          game_id, score, user_id 
         });
       }
       
@@ -56,7 +55,6 @@ export const saveGameScore = async (req, res) => {
         is_high_score: existingScore.rows.length === 0 || score > existingScore.rows[0].score
       });
     } catch (error) {
-      console.error('Save game score error:', error);
-      res.status(500).json({ error: 'Failed to save game score' });
+      res.status(500).json( error);
     }
   };

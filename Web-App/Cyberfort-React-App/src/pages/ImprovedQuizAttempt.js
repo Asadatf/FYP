@@ -267,6 +267,7 @@ const ImprovedQuizAttempt = () => {
       // You can handle the response if needed, e.g., checking if the quiz score was saved successfully
       const result = await res.json();
       console.log(result);
+      window.location.href = '/dashboard';
     } else {
       console.error("Failed to verify token");
     }

@@ -122,6 +122,10 @@ const Navbar = () => {
                       name: data.user.username, // or decodedToken.name
                       email: data.user.email, // or decodedToken.email
                     });
+                    localStorage.setItem('username', data.user.username);
+                    localStorage.setItem('email', data.user.email);
+                    localStorage.setItem('userid', data.user.user_id);
+                    //localStorage.setItem('userid',data.user.)
                     navigate("/dashboard");
                   } else {
                     localStorage.removeItem("token"); // Clear invalid token

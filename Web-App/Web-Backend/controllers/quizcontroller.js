@@ -118,7 +118,7 @@ export const generate_quiz = async (req, res) => {
     const { topic, difficulty, numberOfQuestions } = req.body;
     
     // Make sure we have a valid model name - "gemini-1.0-pro" or "gemini-1.5-pro" for newer version
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     
     const prompt = `Generate a quiz about ${topic} at ${difficulty} level with ${numberOfQuestions} multiple choice questions.Give new questions not the previous ones.
 Each question should have 4 options with only 1 correct answer.
@@ -329,5 +329,22 @@ export const saveQuiz = (req, res) => {
       message: 'Internal server error',
       error: error.message
     });
+  }
+};
+
+export const attemptedQuiz = async (req, res) => {
+  try {
+    const username = req.query.username;
+    const query = `
+      SELECT Count(user_id) 
+      FROM quiz_attempts 
+      WHERE user_id 
+      IN(select user_id from users where username=$1) group by user_id;
+    `;
+    const result = await db.query(query, [username]);
+
+    res.status(200).json(result.rows[0]); // or send result.rows if expecting multiple rows
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };

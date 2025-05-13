@@ -11,10 +11,11 @@ const Dashboard = () => {
   const [games, setGames] = useState([]);
   const [quizzes, setquizzes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [userData] = useState({
-    name: '',
-    email: ''
+  const [userData,setuserdata] = useState({
+    name: localStorage.getItem('username'),
+    email: localStorage.getItem('email')
   });
+  const [complete, setcomplete] =useState(0);
 
   // Add authentication check
   useEffect(() => {
@@ -47,9 +48,16 @@ const Dashboard = () => {
 
         const qresponse = await fetch("http://localhost:5500/api/quiz/getquizzes");
         const qdata = await qresponse.json(); // Convert response to JSON
+
+
         setGames(data.games); // Store games in state
         setquizzes(qdata.quizzes);
-        console.log("hello");
+        console.log(userData)
+        
+        const res = await fetch(`http://localhost:5500/api/quiz/getquizscore?username=${userData.name}`);
+        const dc = await res.json();
+        console.log('Completed Quizzes:', dc);
+        setcomplete(dc.count);
       } catch (err) {
         console.error("Failed to fetch games:", err);
       } finally {
@@ -381,7 +389,7 @@ const Dashboard = () => {
                   </div>
 
                   {/* Weekly Challenge Banner */}
-                  <div className="card border-0 bg-gradient-primary text-white mt-24 overflow-hidden">
+                  {/* <div className="card border-0 bg-gradient-primary text-white mt-24 overflow-hidden">
                     <div className="card-body p-24">
                       <div className="row align-items-center">
                         <div className="col-md-8">
@@ -421,7 +429,7 @@ const Dashboard = () => {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </div> */}
                 </div>
               </div>
             </div>
@@ -434,7 +442,7 @@ const Dashboard = () => {
                   <h4 className="mb-0">My Progress</h4>
                 </div>
                 <div className="card-body p-24">
-                  <div className="text-center mb-24">
+                  {/* <div className="text-center mb-24">
                     <div
                       className="position-relative d-inline-block"
                       style={{ width: "160px", height: "160px" }}
@@ -466,7 +474,7 @@ const Dashboard = () => {
                         <p className="mb-0 text-gray-500 fs-14">Overall</p>
                       </div>
                     </div>
-                  </div>
+                  </div> */}
 
                   <div className="mb-20">
                     <div className="flex-between mb-8">
@@ -519,7 +527,7 @@ const Dashboard = () => {
               </div>
 
               {/* Learning Time */}
-              <div className="card mb-24">
+              {/* <div className="card mb-24">
                 <div className="card-header bg-white border-bottom border-gray-100 p-20">
                   <h4 className="mb-0">Learning Time</h4>
                 </div>
@@ -544,7 +552,7 @@ const Dashboard = () => {
                     </div>
                   </div>
                 </div>
-              </div>
+              </div> */}
 
               {/* Quiz Performance - Enhanced */}
               <div className="card">
@@ -557,7 +565,7 @@ const Dashboard = () => {
                   </div>
                 </div>
                 <div className="card-body p-24">
-                  <div className="text-center mb-24">
+                  {/* <div className="text-center mb-24">
                     <div
                       className="position-relative d-inline-block"
                       style={{ width: "140px", height: "140px" }}
@@ -581,22 +589,22 @@ const Dashboard = () => {
                           fill="none"
                           stroke="#28a745"
                           strokeWidth="3"
-                          strokeDasharray="78, 100"
+                          strokeDasharray="50, 100"
                         />
                       </svg>
                       <div className="position-absolute top-50 start-50 translate-middle text-center">
-                        <h2 className="mb-0 fw-bold">78%</h2>
+                        <h2 className="mb-0 fw-bold">50%</h2>
                         <p className="mb-0 text-gray-500 fs-14">Avg. Score</p>
                       </div>
                     </div>
-                  </div>
+                  </div> */}
 
                   <div className="row g-16 mb-20">
                     <div className="col-6">
                       <div className="p-16 bg-light rounded-12 text-center">
                         <div className="d-flex align-items-center justify-content-center mb-8">
                           <i className="ph ph-check-circle text-success-600 me-4"></i>
-                          <h5 className="text-success-600 fw-bold mb-0">2</h5>
+                          <h5 className="text-success-600 fw-bold mb-0">{complete}</h5>
                         </div>
                         <p className="text-gray-500 mb-0 fs-14">Completed</p>
                       </div>
@@ -605,13 +613,12 @@ const Dashboard = () => {
                       <div className="p-16 bg-light rounded-12 text-center">
                         <div className="d-flex align-items-center justify-content-center mb-8">
                           <i className="ph ph-hourglass text-warning-600 me-4"></i>
-                          <h5 className="text-warning-600 fw-bold mb-0">3</h5>
+                          <h5 className="text-warning-600 fw-bold mb-0">{quizzes.length}</h5>
                         </div>
-                        <p className="text-gray-500 mb-0 fs-14">In Progress</p>
+                        <p className="text-gray-500 mb-0 fs-14">Total Quizzes</p>
                       </div>
                     </div>
                   </div>
-
                   <div className="card bg-light border-0 mb-20">
                     <div className="card-body p-16">
                       <h6 className="mb-12">Performance by Topic</h6>
