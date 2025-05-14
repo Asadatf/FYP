@@ -4,6 +4,7 @@ class ScoreManager {
 
     // Initialize score components
     this.totalScore = 0;
+    this.highScore;
     this.scoreComponents = {
       networkConfig: 0, // Points for network device configuration
       encryption: 0, // Points for successful encryption
@@ -31,9 +32,49 @@ class ScoreManager {
 
     // Create score display
     this.createScoreDisplay();
+    this.createHighScoreDisplay();
 
     // Listen for game events
     this.setupEventListeners();
+  }
+
+  async init() {
+    console.log("Inside Score Manager");
+    await this.fetchLatestScore();
+  }
+
+  async fetchLatestScore() {
+    const token = localStorage.getItem("token"); // or however you're storing JWT on the client
+
+    if (!token) {
+      console.error("No auth token found — user not logged in?");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `http://localhost:5500/api/gamesscore/getScore/${1}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // replace this with your token logic
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch latest score");
+      }
+
+      const data = await response.json();
+      this.highScore = data.score || 0;
+      this.highScoreText.setText(`HIGH SCORE: ${this.highScore}`);
+      console.log(`Fetched latest score: ${this.totalScore}`);
+    } catch (error) {
+      console.error("Error fetching latest score:", error);
+      this.totalScore = 0;
+    }
   }
 
   createScoreDisplay() {
@@ -62,6 +103,31 @@ class ScoreManager {
 
     // Create minimized dashboard (expandable)
     this.createScoreDashboard();
+  }
+
+  createHighScoreDisplay() {
+    // High score container - positioned next to score container
+    this.highScoreContainer = this.scene.add
+      .container(this.scene.scale.width / 2 + 310, 10)
+      .setDepth(100);
+
+    // Background for high score
+    const bg = this.scene.add
+      .rectangle(0, 0, 300, 40, 0x000000, 0.7)
+      .setOrigin(0.5, 0);
+
+    // High score text
+    this.highScoreText = this.scene.add
+      .text(0, 10, `HIGH SCORE: 0`, {
+        fontSize: "20px",
+        fontFamily: "Courier New",
+        fill: "#FFD700", // golden color for high score
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5, 0);
+
+    // Add to container
+    this.highScoreContainer.add([bg, this.highScoreText]);
   }
 
   createScoreDashboard() {
@@ -270,7 +336,7 @@ class ScoreManager {
 
     this.addScore("timeBonus", bonus);
     this.showScorePopup(bonus, `Time Bonus: ${seconds}s`);
-
+    console.log("Level Complete yayyy");
     // Show final score
     this.showFinalScore();
   }
@@ -338,7 +404,8 @@ class ScoreManager {
     });
   }
 
-  showFinalScore() {
+  async showFinalScore() {
+    console.log("Inside show final score");
     // Create final score overlay
     const overlay = this.scene.add
       .rectangle(
@@ -454,6 +521,9 @@ class ScoreManager {
       })
       .setOrigin(0, 0.5);
 
+    this.highScore = this.totalScore;
+    await this.submitScore(1, this.totalScore);
+
     // Continue button
     const continueButton = this.scene.add
       .rectangle(0, 170, 200, 50, 0x004477, 1)
@@ -464,7 +534,8 @@ class ScoreManager {
         fontSize: "20px",
         fill: "#ffffff",
       })
-      .setOrigin(0.5);
+      .setOrigin(0.5)
+      .setDepth(1000);
 
     // Make button interactive
     continueButton
@@ -519,6 +590,48 @@ class ScoreManager {
       ease: "Back.easeOut",
       delay: 500,
     });
+  }
+
+  async submitScore(gameId, score) {
+    console.log("Inside Submit Score");
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      console.error("No auth token found — user not logged in?");
+      return;
+    }
+
+    try {
+      score = Math.round(score);
+      // Add 'const response = await' to properly capture the response
+      const response = await fetch(
+        "http://localhost:5500/api/gamesscore/score",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            game_id: gameId,
+            score: score,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to submit score: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("Score submission response:", data);
+
+      if (data.is_high_score) {
+        console.log("New high score achieved!");
+      }
+    } catch (error) {
+      console.error("Error submitting score:", error);
+    }
   }
 
   // Add this score to the wallet for spending (optional)
