@@ -1399,7 +1399,7 @@ class MessageHandler {
 
   async performAdvancedEncryptionAnalysis(originalMessage, encryptedMessage) {
     try {
-      const response = await fetch("http://localhost:5000/analyze_encryption", {
+      const response = await fetch("http://localhost:5001/analyze_encryption", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1677,6 +1677,14 @@ class MessageHandler {
         onComplete: () => {
           bubbleContainer.destroy();
           noiseTimer.remove(); // Clean up the noise timer
+          // Add this line to emit the levelComplete event
+          this.scene.events.emit(
+            "levelComplete",
+            this.scene.timeManager?.timeRemaining || 0
+          );
+          console.log(
+            "Level complete event emitted from displayReceiverEncryptedMessage"
+          );
         },
       });
     });
@@ -1774,7 +1782,7 @@ class MessageHandler {
     console.log("Full Encrypted Message:", this.encryptedMessage);
   }
 
-  launchEncryptedPacket() {
+  async launchEncryptedPacket() {
     // Check if message is corrupted from MITM attack
     if (this.messageCorrupted) {
       // Corrupt the message
@@ -1897,15 +1905,15 @@ class MessageHandler {
                       this.performAdvancedEncryptionAnalysis(
                         this.lastMessage,
                         this.encryptedMessage
-                      );
-
-                      // Emit encryptionComplete event for scoring
-                      const securityScore = this.securityScore || 50; // Default if not set
-                      this.scene.events.emit(
-                        "encryptionComplete",
-                        this.encryptionMethod,
-                        securityScore
-                      );
+                      ).then(() => {
+                        // This code runs after analysis completes
+                        const securityScore = this.securityScore || 50;
+                        this.scene.events.emit(
+                          "encryptionComplete",
+                          this.encryptionMethod,
+                          securityScore
+                        );
+                      });
                     },
                   });
                 },
@@ -1916,6 +1924,7 @@ class MessageHandler {
       },
     });
   }
+
   processEncryptionAnalysis(result) {
     // Update security score based on the analysis result
     if (result && result.security_score) {
@@ -1929,33 +1938,122 @@ class MessageHandler {
   }
 
   displayEncryptionFeedback(result) {
-    // Create a more comprehensive feedback text
-    const feedbackText = this.scene.add
-      .text(
-        this.rX,
-        this.rY - 150, // Adjusted position
-        `⁠Security Score: ${result.security_score}\n` +
-          `⁠Recommendations:\n${result.recommendations.join("\n")}⁠`,
-        {
-          fontSize: "16px",
-          fill: "#ffffff",
-          backgroundColor: "#000000",
-          padding: 10,
-          align: "center",
-          wordWrap: { width: 300 },
-        }
-      )
+    // Create a styled container for better visual presentation
+    const centerX = this.scene.scale.width / 2;
+    const centerY = this.scene.scale.height / 2;
+
+    // Create background panel with cyberpunk style
+    const panel = this.scene.add.graphics();
+    panel.fillStyle(0x001a2e, 0.9);
+    panel.fillRoundedRect(centerX - 200, centerY - 150, 400, 300, 10);
+    panel.lineStyle(3, 0x00ffaa, 0.8);
+    panel.strokeRoundedRect(centerX - 200, centerY - 150, 400, 300, 10);
+
+    // Add glowing header
+    const headerText = this.scene.add
+      .text(centerX, centerY - 130, "ENCRYPTION ANALYSIS", {
+        fontSize: "24px",
+        fontFamily: "Courier New",
+        fontStyle: "bold",
+        fill: "#00ffff",
+        align: "center",
+      })
       .setOrigin(0.5);
 
-    // Fade out the feedback after a few seconds
+    // Add blinking effect to header
     this.scene.tweens.add({
-      targets: feedbackText,
-      alpha: 0,
-      duration: 5000,
-      delay: 3000,
-      onComplete: () => {
-        feedbackText.destroy();
-      },
+      targets: headerText,
+      alpha: 0.7,
+      duration: 800,
+      yoyo: true,
+      repeat: -1,
+    });
+
+    // Score display with appropriate color based on score
+    const scoreColor =
+      result.security_score > 70
+        ? "#00ff00"
+        : result.security_score > 40
+        ? "#ffff00"
+        : "#ff6666";
+
+    const scoreText = this.scene.add
+      .text(centerX, centerY - 80, `Security Score: ${result.security_score}`, {
+        fontSize: "28px",
+        fontFamily: "Courier New",
+        fontWeight: "bold",
+        fill: scoreColor,
+        stroke: "#000000",
+        strokeThickness: 3,
+      })
+      .setOrigin(0.5);
+
+    // Recommendations section
+    const recommendationTitle = this.scene.add
+      .text(centerX, centerY - 30, "RECOMMENDATIONS:", {
+        fontSize: "18px",
+        fontFamily: "Courier New",
+        fill: "#ffffff",
+        align: "center",
+      })
+      .setOrigin(0.5);
+
+    // Add recommendations with bullet points
+    const recommendations = result.recommendations.map((rec, index) => {
+      return this.scene.add.text(
+        centerX - 180,
+        centerY + index * 40,
+        `• ${rec}`,
+        {
+          fontSize: "16px",
+          fontFamily: "Courier New",
+          fill: "#aaffff",
+          align: "left",
+          wordWrap: { width: 360 },
+        }
+      );
+    });
+
+    // Group all elements for easier management
+    const allElements = [
+      panel,
+      headerText,
+      scoreText,
+      recommendationTitle,
+      ...recommendations,
+    ];
+
+    // Start with elements invisible and fade them in
+    allElements.forEach((el) => el.setAlpha(0));
+
+    // Fade in animation
+    this.scene.tweens.add({
+      targets: allElements,
+      alpha: 1,
+      duration: 800,
+      ease: "Power2",
+    });
+
+    // After display time, fade out and trigger score completion
+    this.scene.time.delayedCall(5000, () => {
+      this.scene.tweens.add({
+        targets: allElements,
+        alpha: 0,
+        duration: 800,
+        ease: "Power2",
+        onComplete: () => {
+          // Clean up
+          allElements.forEach((el) => el.destroy());
+
+          // IMPORTANT: Only trigger encryption complete after feedback is shown
+          const securityScore = result.security_score || 50;
+          this.scene.events.emit(
+            "encryptionComplete",
+            this.encryptionMethod,
+            securityScore
+          );
+        },
+      });
     });
   }
 
@@ -2191,6 +2289,11 @@ class MessageHandler {
   }
 
   openMessagePopup() {
+    if (this.isPuzzleActive) {
+      console.log("Puzzle is active, not showing message popup");
+      return;
+    }
+
     if (!this.menuActive) {
       this.menuActive = true;
       this.isSelectingWords = false;
@@ -2403,17 +2506,24 @@ class MessageHandler {
   }
 
   startWordSelectionTimer() {
-    // Clear any existing timer
+    // Clear any existing timer first
     if (this.wordSelectionTimer) {
       this.wordSelectionTimer.remove();
+      this.wordSelectionTimer = null;
     }
 
-    // Remove previous timer text if exists
     if (this.wordSelectionText) {
       this.wordSelectionText.destroy();
+      this.wordSelectionText = null;
     }
 
-    // Create timer text
+    // Don't start timer if puzzle is active
+    if (this.isPuzzleActive) {
+      console.log("Puzzle is active, not starting word selection timer");
+      return;
+    }
+
+    // Create timer text and continue with timer logic...
     this.wordSelectionText = this.scene.add
       .text(
         this.scene.scale.width / 2,
@@ -2433,9 +2543,8 @@ class MessageHandler {
       delay: 1000,
       repeat: this.wordSelectionTimeLimit - 1,
       callback: () => {
-        // ADD THIS CHECK to prevent timer from interfering with puzzle
+        // Double-check puzzle isn't active on every tick
         if (this.isPuzzleActive) {
-          // If puzzle is active, destroy timer and text
           this.wordSelectionTimer.remove();
           this.wordSelectionTimer = null;
           this.wordSelectionText.destroy();
@@ -2510,22 +2619,30 @@ class MessageHandler {
             this.wordSelectionText.destroy();
             this.wordSelectionText = null;
           }
+
+          // Properly close popup and set active flag
           this.closePopup();
-
-          // ADD THIS FLAG to indicate puzzle is active
           this.isPuzzleActive = true;
+          console.log("Puzzle active flag set:", this.isPuzzleActive);
 
-          this.puzzle.generatePuzzle();
-          console.log("Ready to encrypt:", this.selectedWords);
+          // Hide word text objects
           this.wordTextObjects.forEach((wordText) =>
             wordText.setVisible(false)
           );
 
-          // Update the onSolved callback to reset the flag
+          // Generate the puzzle
+          this.puzzle.generatePuzzle();
+
+          // Update the onSolved callback to properly reset the flag and continue
           this.puzzle.onSolved(() => {
             console.log("Puzzle solved!");
             this.isPuzzleActive = false; // Reset the flag when puzzle is solved
-            this.showEncryptionMethodSelection();
+            console.log("Puzzle active flag reset:", this.isPuzzleActive);
+
+            // Add a small delay before showing encryption methods
+            this.scene.time.delayedCall(300, () => {
+              this.showEncryptionMethodSelection();
+            });
           });
         }
       }
