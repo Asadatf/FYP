@@ -99,6 +99,7 @@ class GameScene extends Phaser.Scene {
     this.walletManager = new WalletManager(this);
 
     this.scoreManager = new ScoreManager(this);
+    this.scoreManager.init();
     this.highScoreManager = new HighScoreManager(this);
 
     this.achievementTracker = new AchievementTracker(this);
