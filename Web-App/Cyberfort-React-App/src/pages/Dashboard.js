@@ -76,9 +76,9 @@ const Dashboard = () => {
   return (
     <>
       <div className="dashboard-main-wrapper">
-        <div className="dashboard-body">
+        <div className="mt-80 dashboard-body">
           {/* Welcome Banner */}
-          <div className="card mb-24 bg-main-600">
+          <div className="card mt-90 mb-24 bg-main-600">
             <div className="card-body p-24">
               <div className="flex-between flex-wrap gap-16">
                 <div>
@@ -88,20 +88,6 @@ const Dashboard = () => {
                   <p className="text-white mb-0 opacity-75">
                     Continue your cybersecurity learning journey
                   </p>
-                </div>
-                <div className="d-flex align-items-center gap-16">
-                  <div className="stats-card bg-white bg-opacity-10 p-16 rounded-12">
-                    <p className="text-white mb-4 fw-medium">Your Progress</p>
-                    <h4 className="text-white mb-0">75% Complete</h4>
-                  </div>
-                  {/* Add logout button */}
-                  <button
-                    onClick={handleLogout}
-                    className="btn btn-light rounded-pill py-10 px-20"
-                  >
-                    Logout
-                    <i className="ph ph-sign-out ms-8"></i>
-                  </button>
                 </div>
               </div>
             </div>
