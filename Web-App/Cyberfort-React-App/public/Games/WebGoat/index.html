@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webgoat</title>
+    <style>
+        body {
+        margin: 0;
+        padding: 0;
+        background-color: #000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        width: 100vw;
+        overflow: hidden;
+        }
+        #game {
+        width: 100%;
+        height: 100%;
+        max-width: 100%;
+        max-height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="game"></div>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+    <script type="text/javascript" src="src/scenes/ScalingManager.js"></script>
+    <script type="text/javascript" src="src/scenes/TitleScreen.js"></script>
+    <script type="text/javascript" src="src/scenes/A1/ChallengeA1Screen.js"></script>
+    <script type="text/javascript" src="src/scenes/A1/ChallengeA1Gameplay.js"></script>
+    <script type="text/javascript" src="src/scenes/A1/ChallengeA1Level2.js"></script>
+    <script type="text/javascript" src="src/scenes/A1/ChallengeA1Level3.js"></script>
+    <script type="text/javascript" src="src/scenes/A1/ChallengeA1Level4.js"></script>
+    <script type="text/javascript" src="src/scenes/GameScene.js"></script>
+    
+    <!-- New files -->
+    <script type="text/javascript" src="src/scenes/GameUIUtils.js"></script>
+    <script type="text/javascript" src="src/scenes/ChallengesScreen.js"></script>
+    <script type="text/javascript" src="src/scenes/A1/A1LevelSelect.js"></script>
+    <script type="text/javascript" src="src/scenes/A1/ChallengeA1GameplayExtension.js"></script>
+    <script type="text/javascript" src="src/scenes/A1/ChallengeA1Level2Extension.js"></script>
+    <script type="text/javascript" src="src/scenes/A1/ChallengeA1Level3Extension.js"></script>
+    <script type="text/javascript" src="src/scenes/A1/ChallengeA1Level4Extension.js"></script>
+    
+    <script type="text/javascript" src="src/scenes/A2/ChallengeA2Screen.js"></script>
+    <script type="text/javascript" src="src/scenes/A2/A2LevelSelect.js"></script>
+    <script type="text/javascript" src="src/scenes/A2/ChallengeA2Level1Gameplay.js"></script>
+    <script type="text/javascript" src="src/scenes/A2/ChallengeA2Level1Extension.js"></script>
+    <script type="text/javascript" src="src/scenes/A2/ChallengeA2Level2.js"></script>
+    <script type="text/javascript" src="src/scenes/A2/ChallengeA2Level2Extension.js"></script>
+    <script type="text/javascript" src="src/scenes/A2/ChallengeA2Level3.js"></script>
+    <script type="text/javascript" src="src/scenes/A2/ChallengeA2Level3Extension.js"></script>
+    <script type="text/javascript" src="src/scenes/A2/ChallengeA2Level4.js"></script>
+    <script type="text/javascript" src="src/scenes/A2/ChallengeA2Level4Extension.js"></script>
+
+    <script type="text/javascript" src="src/scenes/A3/ChallengeA3Screen.js"></script>
+    <script type="text/javascript" src="src/scenes/A3/A3LevelSelect.js"></script>
+    <script type="text/javascript" src="src/scenes/A3/ChallengeA3Level1.js"></script>
+    <script type="text/javascript" src="src/scenes/A3/ChallengeA3Level1Extension.js"></script>
+    <script type="text/javascript" src="src/scenes/A3/ChallengeA3Level2.js"></script>
+    <script type="text/javascript" src="src/scenes/A3/ChallengeA3Level2Extension.js"></script>
+    <script type="text/javascript" src="src/scenes/A3/ChallengeA3Level3.js"></script>
+    <script type="text/javascript" src="src/scenes/A3/ChallengeA3Level3Extension.js"></script>
+    <!-- Main game file (should be loaded last) -->
+    <script type="text/javascript" src="src/main.js"></script>
+</body>
+</html>
