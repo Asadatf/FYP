@@ -41,12 +41,12 @@ const Dashboard = () => {
     const fetchGames = async () => {
       try {
         const response = await fetch(
-          "http://localhost:5500/api/games/getgames?is_active=1"
+          "https://fyp-backend-gamma-flax.vercel.app/api/games/getgames?is_active=1"
         );
         const data = await response.json(); // Convert response to JSON
 
         const qresponse = await fetch(
-          "http://localhost:5500/api/quiz/getquizzes"
+          "https://fyp-backend-gamma-flax.vercel.app/api/quiz/getquizzes"
         );
         const qdata = await qresponse.json(); // Convert response to JSON
         setGames(data.games); // Store games in state
