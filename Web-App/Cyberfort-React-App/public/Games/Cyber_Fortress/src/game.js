@@ -10,7 +10,7 @@ class Game extends Phaser.Game {
       backgroundColor: "#1a1a1a",
       scene: [
         BootScene,
-        PreloadScene,
+        PreLoadScene,
         MenuScene,
         GameScene,
         LevelCompleteScene,
