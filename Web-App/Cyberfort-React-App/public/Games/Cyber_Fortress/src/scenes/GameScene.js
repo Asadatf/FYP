@@ -243,8 +243,18 @@ class GameScene extends Phaser.Scene {
     const padding = 10;
     const gridWidth =
       cellSize * this.GRID_SIZE + padding * (this.GRID_SIZE - 1);
-    const startX = (this.cameras.main.width - gridWidth) / 2;
-    const startY = 160;
+    const gridHeight =
+      cellSize * this.GRID_SIZE + padding * (this.GRID_SIZE - 1);
+
+    // Universal positioning that works on every screen
+    const { width, height } = this.cameras.main;
+    const topUISpace = 200; // Space reserved for top UI elements (title, status, etc.)
+    const bottomMargin = 80; // Universal bottom margin
+    const availableHeight = height - topUISpace - bottomMargin;
+
+    // Center the grid in the available space
+    const startX = (width - gridWidth) / 2;
+    const startY = topUISpace + (availableHeight - gridHeight) / 2;
 
     // Initialize grid arrays
     this.grid = Array(this.GRID_SIZE)
@@ -258,9 +268,9 @@ class GameScene extends Phaser.Scene {
     this.add
       .rectangle(
         startX + gridWidth / 2,
-        startY + gridWidth / 2,
+        startY + gridHeight / 2,
         gridWidth + padding * 2,
-        gridWidth + padding * 2,
+        gridHeight + padding * 2,
         0x2d2d2d
       )
       .setStrokeStyle(1, 0x4d4d4d);
