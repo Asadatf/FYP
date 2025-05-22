@@ -126,7 +126,7 @@ const Navbar = () => {
 
                   // Verify token with backend
                   const response = await fetch(
-                    "http://localhost:5500/api/auth/verifyToken",
+                    "https://fyp-backend-gamma-flax.vercel.app/api/auth/verifyToken",
                     {
                       method: "POST",
                       headers: {
