@@ -253,8 +253,8 @@ class GameScene extends Phaser.Scene {
     const availableHeight = height - topUISpace - bottomMargin;
 
     // Center the grid in the available space
-    const startX = (width - gridWidth) / 2;
-    const startY = topUISpace + (availableHeight - gridHeight) / 2;
+    const startX = (width - gridWidth) / 2 - 50;
+    const startY = topUISpace + (availableHeight - gridHeight) / 2 - 100;
 
     // Initialize grid arrays
     this.grid = Array(this.GRID_SIZE)
@@ -340,7 +340,7 @@ class GameScene extends Phaser.Scene {
     const defensePanel = this.add
       .rectangle(
         sectionWidth / 2 + 20, // Position from left edge
-        height - 160, // Position from bottom - moved up by 80 pixels
+        height - 100, // Position from bottom - moved up by 80 pixels
         sectionWidth + 40, // Made wider
         400, // Made taller
         0x2d2d2d
@@ -427,7 +427,7 @@ class GameScene extends Phaser.Scene {
     const threatPanel = this.add
       .rectangle(
         sectionX + sectionWidth / 2,
-        height - 160, // Same Y position as defense buttons - moved up by 80 pixels
+        height - 100, // Same Y position as defense buttons - moved up by 80 pixels
         sectionWidth + 40, // Made wider
         400, // Made taller
         0x2d2d2d
