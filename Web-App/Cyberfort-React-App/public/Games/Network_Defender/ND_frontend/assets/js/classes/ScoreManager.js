@@ -53,7 +53,7 @@ class ScoreManager {
 
     try {
       const response = await fetch(
-        `http://localhost:5500/api/gamesscore/getScore/${1}`,
+        `https://fyp-backend-gamma-flax.vercel.app//api/gamesscore/getScore/${1}`,
         {
           method: "GET",
           headers: {
@@ -605,7 +605,7 @@ class ScoreManager {
       score = Math.round(score);
       // Add 'const response = await' to properly capture the response
       const response = await fetch(
-        "http://localhost:5500/api/gamesscore/score",
+        "https://fyp-backend-gamma-flax.vercel.app//api/gamesscore/score",
         {
           method: "POST",
           headers: {
