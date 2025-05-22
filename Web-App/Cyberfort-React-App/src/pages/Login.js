@@ -179,7 +179,7 @@ const Login = () => {
 
     try {
       const response = await fetch(
-        "https://fyp-backend-gamma-flax.vercel.app//api/user/signup",
+        "https://fyp-backend-gamma-flax.vercel.app/api/user/signup",
         {
           method: "POST",
           headers: {
@@ -223,7 +223,7 @@ const Login = () => {
 
     try {
       const response = await fetch(
-        "https://fyp-backend-gamma-flax.vercel.app//api/user/login",
+        "https://fyp-backend-gamma-flax.vercel.app/api/user/login",
         {
           method: "POST",
           headers: {
