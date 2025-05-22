@@ -2,20 +2,44 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
-const MessageGenerator = require("./services/MessageGenerator");
+const fetch = require("node-fetch");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Python service URL - change this if hosted differently
+const PYTHON_SERVICE_URL = "http://localhost:5001";
+
+// Import MessageGenerator for fallback
+const MessageGenerator = require("./services/MessageGenerator");
+
 // Routes
 app.get("/api/messages", async (req, res) => {
   try {
-    const message = await MessageGenerator.generateMessage();
+    // Try to connect to the Python service with a timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3-second timeout
+
+    const response = await fetch(`${PYTHON_SERVICE_URL}/api/messages`, {
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`Python service returned status: ${response.status}`);
+    }
+
+    const message = await response.json();
+    console.log("Generated message via model service");
     res.json(message);
   } catch (error) {
-    console.error("Error:", error);
-    res.status(500).json({ error: "Failed to generate message" });
+    console.error("Error connecting to Python service:", error.message);
+    // Fallback to local message generation
+    const message = await MessageGenerator.getRandomPredefinedMessage();
+    console.log("Generated message via local fallback");
+    res.json(message);
   }
 });
 
@@ -59,8 +83,8 @@ mongoose
     {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
-      socketTimeoutMS: 45000, // Close sockets after 45s
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
     }
   )
   .then(() => {
@@ -70,5 +94,5 @@ mongoose
   })
   .catch((error) => {
     console.log(`Database connection failed: ${error.message}`);
-    process.exit(1); // Exit the process on connection failure
+    process.exit(1);
   });
