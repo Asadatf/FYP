@@ -76,7 +76,7 @@ class BootScene extends Phaser.Scene {
 
     // Move to the preload scene after a short delay
     this.time.delayedCall(1500, () => {
-      this.scene.start("PreloadScene");
+      this.scene.start("PreLoadScene");
     });
   }
 }
