@@ -1,7 +1,7 @@
 // PreloadScene - handles asset loading
-class PreloadScene extends Phaser.Scene {
+class PreLoadScene extends Phaser.Scene {
   constructor() {
-    super("PreloadScene");
+    super("PreLoadScene");
   }
 
   preload() {
